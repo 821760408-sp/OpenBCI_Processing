@@ -2,7 +2,7 @@
 
 boolean drawUser = true; //if true... toggles on EEG_Processing_User.draw and toggles off the headplot in Gui_Manager
 
-boolean playSound = false;
+boolean readyToPlay = false;
 
 class EEG_Processing_User {
   private float fs_Hz;  //sample rate
@@ -57,42 +57,55 @@ class EEG_Processing_User {
     
     //--------------------- some conditionals -------------------------
     
-    if (myAverage <= acceptableLimitUV && (myAverage/lastAve - 1.0) >= thresholdRes) {
-      drum.play();
-    }
-    
     if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ // 
-      upperThreshold = myAverage; 
+       upperThreshold = myAverage; 
     }
     
     if(myAverage <= lowerThreshold){
-      lowerThreshold = myAverage; 
+       lowerThreshold = myAverage; 
     }
     
-    if(upperThreshold >= myAverage){
-     upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
+    if(upperThreshold >= 25){
+      upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
     }
     
-    if(lowerThreshold <= myAverage){
-     lowerThreshold += (25 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
+    if(lowerThreshold <= 15){
+      lowerThreshold += (15 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
     }
     
-    output = (int)map(myAverage, lowerThreshold, upperThreshold, 0, 255);
-    output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
-    output_adjusted = ((-0.1/(output_normalized*255.0)) + 255.0);
+    println("inMoov_output: | " + inMoov_output + " |");
+    // if(inMoov_output >= 100){
+    //   println("DRUM!!!!");
+    //   drum1.trigger();
+    // }
     
-    //trip the output to a value between 0-255
-    if(output < 0) output = 0;
-    if(output > 255) output = 255;
+    if(inMoov_output >= 50 && readyToPlay == true){
+      println("DRUM!!!!");
+      drum.trigger();
+      readyToPlay = false;
+    }
     
-    //attempt to write to serial_output. If this serial port does not exist, do nothing.
-    try {
-      println("inMoov_output: | " + output + " |");
-      serial_output.write(output);
+    if(readyToPlay == false && inMoov_output <= 40){
+      readyToPlay = true;
+      println("READY!");
     }
-    catch(RuntimeException e){
-      println("serial not present");
-    }
+    
+    // drum1.play();
+    // inMoov_serial.write((char)inMoov_output);
+    
+//    if(myAverage >= upperThreshold && isTriggered == false){
+//      isTriggered = true;
+//      println("SENDING O!");
+//      openBCI.serial_openBCI.write('o'); 
+//    }
+//    if(myAverage <= lowerThreshold && isTriggered == true){
+//      isTriggered = false;
+//      println("SENDING G!");
+//      openBCI.serial_openBCI.write('g'); 
+//    }  
+    
+    inMoov_output = map(myAverage, lowerThreshold, upperThreshold, 0, 250);
+    inMoov_output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
         
     //OR, you could loop over each EEG channel and do some sort of frequency-domain processing from the FFT data
     float FFT_freq_Hz, FFT_value_uV;
