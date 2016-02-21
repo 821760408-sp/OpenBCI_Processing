@@ -25,6 +25,9 @@ import java.util.Map.Entry;
 import processing.serial.*;  //for serial communication to Arduino/OpenBCI
 import java.awt.event.*; //to allow for event listener on screen resize
 
+Minim minim;
+AudioPlayer drum;
+
 boolean isVerbose = false; //set true if you want more verbosity in console
 
 //used to switch between application states
@@ -157,6 +160,9 @@ PFont f3;
 //========================SETUP============================//
 //========================SETUP============================//
 void setup() {
+  
+  minim = new Minim(this);
+  drum = minim.loadFile(
   
   //open window
   size(1024, 768, P2D);

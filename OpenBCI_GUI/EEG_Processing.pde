@@ -12,8 +12,14 @@ class EEG_Processing_User {
   float lowerThreshold = 0;  //default uV lower threshold value ... this will automatically change over time
   int averagePeriod = 250;  //number of data packets to average over (250 = 1 sec)
   int thresholdPeriod = 1250;  //number of packets
+  
+  int thresholdRes = 2.0 // 200% 
+  
   int ourChan = 3 - 1;  //channel being monitored ... "3 - 1" means channel 3 (with a 0 index)
   float myAverage = 0.0;   //this will change over time ... used for calculations below
+  
+  float lastAve = 0.0; // store the last average value
+  
   float acceptableLimitUV = 255;  //uV values above this limit are excluded, as a result of them almost certainly being noise...
   
   //if writing to a serial port
@@ -39,8 +45,8 @@ class EEG_Processing_User {
     //using the sample values that have already been filtered, as will be plotted on the display
     float EEG_value_uV;
     
-    for(int i = data_forDisplay_uV[ourChan].length - averagePeriod; i < data_forDisplay_uV[ourChan].length; i++){
-       if(data_forDisplay_uV[ourChan][i] <= acceptableLimitUV){ //prevent BIG spikes from effecting the average
+    for (int i = data_forDisplay_uV[ourChan].length - averagePeriod; i < data_forDisplay_uV[ourChan].length; i++) {
+       if (data_forDisplay_uV[ourChan][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
          myAverage += abs(data_forDisplay_uV[ourChan][i]);  //add value to average ... we will soon divide by # of packets
        }
     }
@@ -48,6 +54,9 @@ class EEG_Processing_User {
     myAverage = myAverage / float(averagePeriod); //finishing the average
     
     //--------------------- some conditionals -------------------------
+    
+    if (myAverage <= acceptableLimitUV && (myAverage/lastAve - 1.0) >= thresholdRes) {
+      
     
     if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ // 
        upperThreshold = myAverage; 
@@ -130,7 +139,7 @@ class EEG_Processing_User {
     popStyle();
   }
   
-  myAverage = 0.0;
+  //myAverage = 0.0;
 }
 
 class EEG_Processing {
