@@ -3,6 +3,7 @@
 boolean drawUser = true; //if true... toggles on EEG_Processing_User.draw and toggles off the headplot in Gui_Manager
 
 boolean readyToPlay = false;
+boolean channel1ToPlay = false;
 
 class EEG_Processing_User {
   private float fs_Hz;  //sample rate
@@ -12,21 +13,28 @@ class EEG_Processing_User {
   boolean isTriggered = false;  //boolean to keep track of when the trigger condition is met
   float upperThreshold = 25;  //default uV upper threshold value ... this will automatically change over time
   float lowerThreshold = 0;  //default uV lower threshold value ... this will automatically change over time
+  float channel1UpperThreshold = 25;
+  float channel1LowerThreshold = 0;
   int averagePeriod = 250;  //number of data packets to average over (250 = 1 sec)
   int thresholdPeriod = 1250;  //number of packets
   
-  int thresholdRes = 2.0 // 200% 
+  float thresholdRes = 2.0; // 200% 
   
-  int ourChan = 3 - 1;  //channel being monitored ... "3 - 1" means channel 3 (with a 0 index)
+  int channel1 = 1 - 1;
+  int ourChan = 2 - 1;  //channel being monitored ... "3 - 1" means channel 3 (with a 0 index)
   float myAverage = 0.0;   //this will change over time ... used for calculations below
+  float channel1Average = 0.0;   //this will change over time ... used for calculations below
+
   
   float lastAve = 0.0; // store the last average value
   
   float acceptableLimitUV = 255;  //uV values above this limit are excluded, as a result of them almost certainly being noise...
   
   //if writing to a serial port
-  int output = 0; //value between 0-255 that is the relative position of the current uV average between the rolling lower and upper uV thresholds
+  float output = 0; //value between 0-255 that is the relative position of the current uV average between the rolling lower and upper uV thresholds
+  float channel1Output = 0; 
   float output_normalized = 0;  //converted to between 0-1
+  float channel1_output_normalized = 0;
   float output_adjusted = 0;  //adjusted depending on range that is expected on the other end, ie 0-255?
  
   //class constructor
@@ -66,26 +74,26 @@ class EEG_Processing_User {
     }
     
     if(upperThreshold >= 25){
-      upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
+      upperThreshold -= (upperThreshold - 25)/(frameRate * 1); //have upper threshold creep downwards to keep range tight
     }
     
     if(lowerThreshold <= 15){
-      lowerThreshold += (15 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
+      lowerThreshold += (15 - lowerThreshold)/(frameRate * 1); //have lower threshold creep upwards to keep range tight
     }
     
-    println("inMoov_output: | " + inMoov_output + " |");
+    println("inMoov_output: | " + output + " |");
     // if(inMoov_output >= 100){
     //   println("DRUM!!!!");
     //   drum1.trigger();
     // }
     
-    if(inMoov_output >= 50 && readyToPlay == true){
+    if(output >= 25 && readyToPlay == true){
       println("DRUM!!!!");
       drum.trigger();
       readyToPlay = false;
     }
     
-    if(readyToPlay == false && inMoov_output <= 40){
+    if(readyToPlay == false && output <= 20){
       readyToPlay = true;
       println("READY!");
     }
@@ -104,8 +112,70 @@ class EEG_Processing_User {
 //      openBCI.serial_openBCI.write('g'); 
 //    }  
     
-    inMoov_output = map(myAverage, lowerThreshold, upperThreshold, 0, 250);
-    inMoov_output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
+    output = map(myAverage, lowerThreshold, upperThreshold, 0, 250);
+    output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
+    
+    
+    for (int i = data_forDisplay_uV[channel1].length - averagePeriod; i < data_forDisplay_uV[channel1].length; i++) {
+       if (data_forDisplay_uV[channel1][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
+         channel1Average += abs(data_forDisplay_uV[channel1][i]);  //add value to average ... we will soon divide by # of packets
+       }
+    }
+
+    channel1Average = channel1Average / float(averagePeriod); //finishing the average
+    
+    //--------------------- some conditionals -------------------------
+    
+    if(channel1Average >= channel1UpperThreshold && channel1Average <= acceptableLimitUV){ // 
+       channel1UpperThreshold = channel1Average; 
+    }
+    
+    if(channel1Average <= channel1LowerThreshold){
+       channel1LowerThreshold = channel1Average; 
+    }
+    
+    if(channel1UpperThreshold >= 25){
+      channel1UpperThreshold -= (channel1UpperThreshold - 25)/(frameRate * 1); //have upper threshold creep downwards to keep range tight
+    }
+    
+    if(channel1LowerThreshold <= 15){
+      channel1LowerThreshold += (15 - channel1LowerThreshold)/(frameRate * 1); //have lower threshold creep upwards to keep range tight
+    }
+    
+    println("inMoov_output: | " + output + " |");
+    // if(inMoov_output >= 100){
+    //   println("DRUM!!!!");
+    //   drum1.trigger();
+    // }
+    
+    if(channel1Output >= 25 && readyToPlay == true){
+      println("DRUM!!!!");
+      drum.trigger();
+      channel1ToPlay = false;
+    }
+    
+    if(readyToPlay == false && channel1Output <= 20){
+      channel1ToPlay = true;
+      println("READY!");
+    }
+    
+    // drum1.play();
+    // inMoov_serial.write((char)inMoov_output);
+    
+//    if(myAverage >= upperThreshold && isTriggered == false){
+//      isTriggered = true;
+//      println("SENDING O!");
+//      openBCI.serial_openBCI.write('o'); 
+//    }
+//    if(myAverage <= lowerThreshold && isTriggered == true){
+//      isTriggered = false;
+//      println("SENDING G!");
+//      openBCI.serial_openBCI.write('g'); 
+//    }  
+    
+    channel1Output = map(channel1Average, channel1LowerThreshold, channel1UpperThreshold, 0, 250);
+    //output_normalized = map(channel1Average, channel1LowerThreshold, channel1UpperThreshold, 0, 1);
+    
         
     //OR, you could loop over each EEG channel and do some sort of frequency-domain processing from the FFT data
     float FFT_freq_Hz, FFT_value_uV;

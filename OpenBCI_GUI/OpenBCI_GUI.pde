@@ -16,6 +16,8 @@
 ///////////////////////////////////////////////
 
 import ddf.minim.analysis.*; //for FFT
+import ddf.minim.Minim;
+import ddf.minim.AudioSample;
 //import ddf.minim.*;  // commented because too broad.. contains "Controller" class which is also contained in ControlP5... need to be more specific // To make sound.  Following minim example "frequencyModulation"
 import ddf.minim.ugens.*;  // To make sound.  Following minim example "frequencyModulation"
 import java.lang.Math; //for exp, log, sqrt...they seem better than Processing's built-in
@@ -26,7 +28,7 @@ import processing.serial.*;  //for serial communication to Arduino/OpenBCI
 import java.awt.event.*; //to allow for event listener on screen resize
 
 Minim minim;
-AudioPlayer drum;
+AudioSample drum;
 
 boolean isVerbose = false; //set true if you want more verbosity in console
 
@@ -162,7 +164,7 @@ PFont f3;
 void setup() {
   
   minim = new Minim(this);
-  drum1 = minim.loadSample("drum1.mp3");
+  drum = minim.loadSample("drum1.mp3");
   
   //open window
   size(1024, 768, P2D);
