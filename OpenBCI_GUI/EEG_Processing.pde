@@ -56,23 +56,24 @@ class EEG_Processing_User {
     //--------------------- some conditionals -------------------------
     
     if (myAverage <= acceptableLimitUV && (myAverage/lastAve - 1.0) >= thresholdRes) {
-      
-    
-    if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ // 
-       upperThreshold = myAverage; 
+      drum.play();
     }
     
-    if(myAverage <= lowerThreshold){
-       lowerThreshold = myAverage; 
-    }
+    //if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ // 
+    //   upperThreshold = myAverage; 
+    //}
     
-    if(upperThreshold >= myAverage){
-      upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
-    }
+    //if(myAverage <= lowerThreshold){
+    //   lowerThreshold = myAverage; 
+    //}
     
-    if(lowerThreshold <= myAverage){
-      lowerThreshold += (25 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
-    }
+    //if(upperThreshold >= myAverage){
+    //  upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
+    //}
+    
+    //if(lowerThreshold <= myAverage){
+    //  lowerThreshold += (25 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
+    //}
     
     output = (int)map(myAverage, lowerThreshold, upperThreshold, 0, 255);
     output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);

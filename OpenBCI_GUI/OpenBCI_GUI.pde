@@ -162,7 +162,7 @@ PFont f3;
 void setup() {
   
   minim = new Minim(this);
-  drum = minim.loadFile(
+  drum1 = minim.loadSample("drum1.mp3");
   
   //open window
   size(1024, 768, P2D);
