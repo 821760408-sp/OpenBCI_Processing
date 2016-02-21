@@ -2,6 +2,8 @@
 
 boolean drawUser = true; //if true... toggles on EEG_Processing_User.draw and toggles off the headplot in Gui_Manager
 
+boolean playSound = false;
+
 class EEG_Processing_User {
   private float fs_Hz;  //sample rate
   private int nchan;  
@@ -59,21 +61,21 @@ class EEG_Processing_User {
       drum.play();
     }
     
-    //if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ // 
-    //   upperThreshold = myAverage; 
-    //}
+    if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ // 
+      upperThreshold = myAverage; 
+    }
     
-    //if(myAverage <= lowerThreshold){
-    //   lowerThreshold = myAverage; 
-    //}
+    if(myAverage <= lowerThreshold){
+      lowerThreshold = myAverage; 
+    }
     
-    //if(upperThreshold >= myAverage){
-    //  upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
-    //}
+    if(upperThreshold >= myAverage){
+     upperThreshold -= (upperThreshold - 25)/(frameRate * 5); //have upper threshold creep downwards to keep range tight
+    }
     
-    //if(lowerThreshold <= myAverage){
-    //  lowerThreshold += (25 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
-    //}
+    if(lowerThreshold <= myAverage){
+     lowerThreshold += (25 - lowerThreshold)/(frameRate * 5); //have lower threshold creep upwards to keep range tight
+    }
     
     output = (int)map(myAverage, lowerThreshold, upperThreshold, 0, 255);
     output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
