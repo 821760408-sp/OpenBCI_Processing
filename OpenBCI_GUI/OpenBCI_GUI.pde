@@ -904,6 +904,11 @@ void mousePressed() {
             gui.maxDisplayFreqButton.setIsActive(true);
             gui.incrementMaxDisplayFreq();
           }
+          // add our soundSampleListButton behavior here
+          if (gui.soundSampleListButton.isMouseHere()) {
+            gui.soundSampleListButton.setIsActive(true);
+            gui.toggleSoundSampleSourceBox();
+          }
           
     //      //check the detection button
     //      if (gui.detectButton.updateIsMouseHere()) {

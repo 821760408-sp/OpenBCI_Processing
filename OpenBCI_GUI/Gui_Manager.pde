@@ -23,6 +23,9 @@ import org.gwoptics.graphics.graph2D.backgrounds.*;
 import ddf.minim.analysis.*; //for FFT
 import java.util.*; //for Array.copyOfRange()
 
+// add a new MenuList for selecting samples
+MenuList soundSampleList;
+
 class Gui_Manager {
   ScatterTrace montageTrace;
   ScatterTrace_FFT fftTrace;
@@ -45,6 +48,13 @@ class Gui_Manager {
   Button smoothingButton;
   Button maxDisplayFreqButton;
   Button showPolarityButton;
+  // add a new button for toggling a list of sound samples to use when being triggered
+  Button soundSampleListButton;
+  // add a new menu box instance to attach to soundSampleListButton
+  SoundSampleSourceBox sssBox;
+  color boxColor = color(200);
+  color boxStrokeColor = color(138, 146, 153);
+  boolean drawSoundSampleSourceBox = false;
 
   //these two buttons toggle between EEG graph state (they are mutually exclusive states)
   Button showMontageButton; // to show uV time graph as opposed to channel controller
@@ -287,6 +297,16 @@ class Gui_Manager {
     
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset,gutter_between_buttons);
     filtBPButton = new Button(x,y,w,h,"BP Filt\n" + eegProcessing.getShortFilterDescription(),fontInfo.buttonLabel_size);
+    
+    x = calcButtonXLocation(Ibut++, win_x, w, xoffset, gutter_between_buttons);
+    soundSampleListButton = new Button(x, y, w, h, "Sample List", fontInfo.buttonLabel_size);
+    soundSampleListButton.setIsActive(false);
+    soundSampleListButton.makeDropdownButton(true);
+    x = 2 + soundSampleListButton.but_x;
+    y = 4 + soundSampleListButton.but_dy;    
+    w = soundSampleListButton.but_dx * 4;
+    h = height - int(helpWidget.h);
+    sssBox = new SoundSampleSourceBox(x, y, w, h, 10);
 
     set_vertScaleAsLog(true);
     
@@ -302,6 +322,11 @@ class Gui_Manager {
     //set the initial display page for the GUI
     setGUIpage(GUI_PAGE_HEADPLOT_SETUP);  
   } 
+  
+  public void toggleSoundSampleSourceBox () {
+    drawSoundSampleSourceBox = !drawSoundSampleSourceBox;
+  }
+  
   private int calcButtonXLocation(int Ibut,int win_x,int w, int xoffset, float gutter_between_buttons) {
     // return xoffset + (Ibut * (w + (int)(gutter_between_buttons*win_x)));
     return width - ((Ibut+1) * (w + 2)) - 1;
@@ -843,6 +868,26 @@ class Gui_Manager {
         smoothingButton.draw();
         showPolarityButton.draw();
         maxDisplayFreqButton.draw();
+        soundSampleListButton.draw();
+        // draw dropdown list according to drawSSSBOX flag
+        if (drawSoundSampleSourceBox) {
+          int x = soundSampleListButton.but_x;
+          int y = 2 + soundSampleListButton.but_dy;    
+          int w = soundSampleListButton.but_dx * 5;
+          int h = height - int(helpWidget.h);
+          //pushStyle();
+          //fill(boxColor);
+          //strokeWeight(1);
+          //stroke(boxStrokeColor);
+          //rect(x, y, w, sssBox.h); //draw background of box
+          //String stopInstructions = "Press the \"STOP SYSTEM\" button to edit system settings.";
+          //textAlign(CENTER, TOP);
+          //textFont(f2);
+          //fill(bgColor);
+          //text(stopInstructions, x + 10 * 2, y + 10 * 4, w - 10 * 4, sssBox.h - 10 * 4);
+          //popStyle();
+          sssBox.draw();
+        }
         break;
       default:  //assume GUI_PAGE_CHANNEL_ONOFF:
         //show channel buttons
@@ -923,6 +968,45 @@ class Gui_Manager {
     showPolarityButton.setIsActive(false);
     maxDisplayFreqButton.setIsActive(false);
     biasButton.setIsActive(false);
+    // set out new Button inactive
+    soundSampleListButton.setIsActive(false);
   }
  
+};
+
+// new class for the menu box
+class SoundSampleSourceBox {
+  int x, y, w, h, padding; //size and position
+
+  SoundSampleSourceBox (int _x, int _y, int _w, int _h, int _padding) {
+    x = _x;
+    y = _y;
+    w = _w;
+    //h = 115;
+    h = 300;
+    padding = _padding;
+
+    soundSampleList = new MenuList(cp5, "soundSampleList", w - padding * 2, 72, f2);
+    soundSampleList.setPosition(x + padding, y + padding * 2 + 13);
+    soundSampleList.addItem(makeItem("      beat 1      "));
+    soundSampleList.addItem(makeItem("      beat 2      "));
+    soundSampleList.addItem(makeItem("      beat 3      "));
+    soundSampleList.scrollerLength = 10;
+  }
+
+  public void update() {
+  }
+
+  public void draw() {
+    pushStyle();
+    fill(boxColor);
+    stroke(boxStrokeColor);
+    strokeWeight(1);
+    rect(x, y, w, h);
+    fill(bgColor);
+    textFont(f1);
+    textAlign(CENTER, TOP);
+    text("SOUND SAMPLE SOURCE", x + padding, y + padding);
+    popStyle();
+  }
 };
