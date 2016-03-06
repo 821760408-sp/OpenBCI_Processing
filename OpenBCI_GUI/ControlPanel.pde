@@ -28,6 +28,8 @@ CallbackListener cb = new CallbackListener() { //used by ControlP5 to clear text
 
 MenuList sourceList;
 
+MenuList sampleList;
+
 //Global buttons and elements for the control panel (changed within the classes below)
 MenuList serialList;
 String[] serialPorts = new String[Serial.list().length];
@@ -472,6 +474,44 @@ class DataSourceBox {
     //checkboxes of system states
   }
 };
+
+class SampleSourceBox {
+  int x, y, w, h, padding; //size and position
+
+  /**
+   * Constructor
+   */
+  SampleSourceBox (int _x, int _y, int _w, int _h, int _padding) {
+    x = _x;
+    y = _y;
+    w = _w;
+    h = 235;
+    padding = _padding;
+
+    sampleList = new MenuList(cp5, "sampleList", w - padding*2, 192, f2);
+    sampleList.setPosition(x + padding, y + padding*2 + 13);
+    for (int i = 0; i < nchan; ++i) { //nchan is a global variable defined in OpenBCI_GUI.pde
+      sampleList.addItem(makeItem("Channel " + i));
+    }
+    sampleList.scrollerLength = 10;
+  }
+
+  public void update () {
+  }
+
+  public void draw () {
+    pushStyle();
+    fill(boxColor);
+    stroke(boxStrokeColor);
+    strokeWeight(1);
+    rect(x, y, w, h);
+    fill(bgColor);
+    textFont(f1);
+    textAlign(LEFT, TOP);
+    text("ADD SAMPLE TO", x + padding, y + padding);
+    popStyle();
+  }
+}
 
 class SerialBox {
   int x, y, w, h, padding; //size and position

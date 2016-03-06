@@ -24,15 +24,14 @@ import ddf.minim.analysis.*; //for FFT
 import java.util.*; //for Array.copyOfRange()
 
 class Gui_Manager {
-  // new class for the menu box
+  
   class SampleBlock {
-    //sizes and positions
-    int x, y, w, h, padding;
+    int x, y, w, h, padding; //sizes and positions
+    MenuList sampleMenu;     //MenuList for selecting samples
 
-    //MenuList for selecting samples
-    MenuList sampleMenu;
-
-    //constructor
+    /**
+     * Constructor
+     */
     SampleBlock (int _x, int _y, int _w, int _h, int _padding) {
       x = _x;
       y = _y;
@@ -40,8 +39,7 @@ class Gui_Manager {
       h = 300;
       padding = _padding;
 
-      //cp5 is a global instance of ControlP5 declared in OpenBCI_GUI.pde
-      sampleMenu = new MenuList(cp5, "sampleMenu", w - padding * 2, 72, f2);
+      sampleMenu = new MenuList(cp5, "sampleMenu", w - padding*2, 192, f1); //cp5 is a global instance of ControlP5 declared in OpenBCI_GUI.pde
       sampleMenu.setPosition(x + padding, y + padding * 2 + 13);
       sampleMenu.addItem(makeItem("      beat 1      "));
       sampleMenu.addItem(makeItem("      beat 2      "));
