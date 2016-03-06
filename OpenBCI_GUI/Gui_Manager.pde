@@ -301,7 +301,7 @@ class Gui_Manager {
     
     int boxX = x;
     int boxY = 2 + sampleButton.but_dy;
-    int boxW = sampleButton.but_dx * 3 - 10;
+    int boxW = sampleButton.but_dx * 4 - 10;
     int boxH = 235;
     int padding = 10;
     sampleBox = new SampleSourceBox(boxX, boxY, boxW, boxH, padding);
@@ -946,7 +946,7 @@ class SampleSourceBox {
     sampleList = new MenuList(cp5, "sampleList", w - padding*2, 192, f2);
     sampleList.setPosition(x + padding, y + padding*2 + 13);
     for (int i = 0; i < nchan; ++i) { //nchan is a global variable defined in OpenBCI_GUI.pde
-      sampleList.addItem(makeItem("Channel " + (i + 1)));
+      sampleList.addItem(makeItem("Channel " + (i + 1) + ": "));
     }
     sampleList.scrollerLength = 10;
   }

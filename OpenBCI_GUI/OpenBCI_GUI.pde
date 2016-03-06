@@ -28,7 +28,7 @@ import processing.serial.*;  //for serial communication to Arduino/OpenBCI
 import java.awt.event.*; //to allow for event listener on screen resize
 
 Minim minim;
-AudioSample drum;
+AudioSample[] audioSamples;
 
 boolean isVerbose = false; //set true if you want more verbosity in console
 
@@ -164,7 +164,7 @@ PFont f3;
 void setup() {
 
   minim = new Minim(this);
-  drum = minim.loadSample("drum1.mp3");
+  audioSamples = new AudioSample[nchan];
 
   //open window
   size(1024, 768, P2D);
