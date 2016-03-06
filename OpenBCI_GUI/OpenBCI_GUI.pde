@@ -904,11 +904,11 @@ void mousePressed() {
             gui.maxDisplayFreqButton.setIsActive(true);
             gui.incrementMaxDisplayFreq();
           }
-          // add our sampleMenuButton behavior here
-          if (gui.sampleMenuButton.isMouseHere()) {
-            gui.sampleMenuButton.setIsActive(true);
-            gui.toggleSampleBlock();
-          }
+          // // add our sampleButton behavior here
+          // if (gui.sampleButton.isMouseHere()) {
+          //   gui.sampleButton.setIsActive(true);
+          //   gui.toggleSampleBlock();
+          // }
 
     //      //check the detection button
     //      if (gui.detectButton.updateIsMouseHere()) {

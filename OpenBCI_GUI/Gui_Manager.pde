@@ -24,45 +24,6 @@ import ddf.minim.analysis.*; //for FFT
 import java.util.*; //for Array.copyOfRange()
 
 class Gui_Manager {
-  
-  class SampleBlock {
-    int x, y, w, h, padding; //sizes and positions
-    MenuList sampleMenu;     //MenuList for selecting samples
-
-    /**
-     * Constructor
-     */
-    SampleBlock (int _x, int _y, int _w, int _h, int _padding) {
-      x = _x;
-      y = _y;
-      w = _w;
-      h = 300;
-      padding = _padding;
-
-      sampleMenu = new MenuList(cp5, "sampleMenu", w - padding*2, 192, f1); //cp5 is a global instance of ControlP5 declared in OpenBCI_GUI.pde
-      sampleMenu.setPosition(x + padding, y + padding * 2 + 13);
-      sampleMenu.addItem(makeItem("      beat 1      "));
-      sampleMenu.addItem(makeItem("      beat 2      "));
-      sampleMenu.addItem(makeItem("      beat 3      "));
-      sampleMenu.scrollerLength = 10;
-    }
-
-    public void update() {
-    }
-
-    public void draw() {
-      pushStyle();
-      fill(boxColor);
-      stroke(boxStrokeColor);
-      strokeWeight(1);
-      rect(x, y, w, h);
-      fill(bgColor);
-      textFont(f1);
-      textAlign(CENTER, TOP);
-      text("CHOOSE SAMPLES", x + padding, y + padding);
-      popStyle();
-    }
-  };
 
   ScatterTrace montageTrace;
   ScatterTrace_FFT fftTrace;
@@ -73,7 +34,7 @@ class Gui_Manager {
   HeadPlot headPlot1;
   Button[] chanButtons;
   // Button guiPageButton;
-  //boolean showImpedanceButtons;
+  // boolean showImpedanceButtons;
   Button[] impedanceButtonsP;
   Button[] impedanceButtonsN;
   Button biasButton;
@@ -85,13 +46,8 @@ class Gui_Manager {
   Button smoothingButton;
   Button maxDisplayFreqButton;
   Button showPolarityButton;
-  // add a new button for toggling a list of sound samples to use when being triggered
-  Button sampleMenuButton;
-  // add a new menu box instance to attach to sampleMenuButton
-  SampleBlock sssBox;
-  color boxColor = color(200);
-  color boxStrokeColor = color(138, 146, 153);
-  boolean drawSampleBlock = false;
+  Button sampleButton; // toggles a menu for assigning audio samples to channels
+  // boolean drawSampleBlock = false;
 
   //these two buttons toggle between EEG graph state (they are mutually exclusive states)
   Button showMontageButton; // to show uV time graph as opposed to channel controller
@@ -333,36 +289,36 @@ class Gui_Manager {
     filtNotchButton = new Button(x,y,w,h,"Notch\n" + eegProcessing.getShortNotchDescription(),fontInfo.buttonLabel_size);
 
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset,gutter_between_buttons);
+    println("filt button x: " + x);
     filtBPButton = new Button(x,y,w,h,"BP Filt\n" + eegProcessing.getShortFilterDescription(),fontInfo.buttonLabel_size);
 
-    x = calcButtonXLocation(Ibut++, win_x, w, xoffset, gutter_between_buttons);
-    sampleMenuButton = new Button(x, y, w, h, "Sample List", fontInfo.buttonLabel_size);
-    sampleMenuButton.setIsActive(false);
-    sampleMenuButton.makeDropdownButton(true);
-    x = 2 + sampleMenuButton.but_x;
-    y = 4 + sampleMenuButton.but_dy;
-    w = sampleMenuButton.but_dx * 4;
-    h = height - int(helpWidget.h);
-    sssBox = new SampleBlock(x, y, w, h, 10);
+    x = calcButtonXLocation(Ibut++, win_x, w, xoffset, gutter_between_buttons); //int win_x = 1024; window width
+    println("audio sample button x: " + x);
+    sampleButton = new Button(x, y, w, h, "Add\nAudio Samples", fontInfo.buttonLabel_size);
+    sampleButton.setIsActive(false);
+    // sampleButton.makeDropdownButton(true);
+    // x = 2 + sampleButton.but_x;
+    // y = 4 + sampleButton.but_dy;
+    // w = sampleButton.but_dx * 4;
+    // h = height - int(helpWidget.h);
+    // sssBox = new SampleBlock(x, y, w, h, 10);
 
     set_vertScaleAsLog(true);
 
     //setup start/stop button
-    // x = win_x - int(gutter_right*float(win_x)) - w;
-    //x = width/2 - w;
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset,gutter_between_buttons);
+    println("x: " + x);
     int w_wide = 120;    //button width, wider
-    x = x + w - w_wide-((int)(gutter_between_buttons*win_x));  //adjust the x position for the wider button, plus double the gutter
-    stopButton = new Button(x,y,w_wide,h,stopButton_pressToStart_txt,fontInfo.buttonLabel_size);
-
+    x = x + w - w_wide - (int)(gutter_between_buttons*win_x);  //adjust the x position for the wider button, plus double the gutter
+    stopButton = new Button(x, y, w_wide, h, stopButton_pressToStart_txt, fontInfo.buttonLabel_size);
 
     //set the initial display page for the GUI
     setGUIpage(GUI_PAGE_HEADPLOT_SETUP);
   }
 
-  public void toggleSampleBlock () {
-    drawSampleBlock = !drawSampleBlock;
-  }
+  // public void toggleSampleBlock () {
+  //   drawSampleBlock = !drawSampleBlock;
+  // }
 
   private int calcButtonXLocation(int Ibut,int win_x,int w, int xoffset, float gutter_between_buttons) {
     // return xoffset + (Ibut * (w + (int)(gutter_between_buttons*win_x)));
@@ -893,6 +849,7 @@ class Gui_Manager {
         biasButton.draw();
         break;
       case GUI_PAGE_HEADPLOT_SETUP:
+        sampleButton.draw();
         intensityFactorButton.draw();
         loglinPlotButton.draw();
         filtBPButton.draw();
@@ -901,13 +858,13 @@ class Gui_Manager {
         smoothingButton.draw();
         showPolarityButton.draw();
         maxDisplayFreqButton.draw();
-        sampleMenuButton.draw();
-        // draw dropdown list according to drawSSSBOX flag
-        if (drawSampleBlock) {
-          int x = sampleMenuButton.but_x;
-          int y = 2 + sampleMenuButton.but_dy;
-          int w = sampleMenuButton.but_dx * 5;
-          int h = height - int(helpWidget.h);
+        
+        // // draw dropdown list according to drawSSSBOX flag
+        // if (drawSampleBlock) {
+        //   int x = sampleButton.but_x;
+        //   int y = 2 + sampleButton.but_dy;
+        //   int w = sampleButton.but_dx * 5;
+        //   int h = height - int(helpWidget.h);
           //pushStyle();
           //fill(boxColor);
           //strokeWeight(1);
@@ -919,8 +876,8 @@ class Gui_Manager {
           //fill(bgColor);
           //text(stopInstructions, x + 10 * 2, y + 10 * 4, w - 10 * 4, sssBox.h - 10 * 4);
           //popStyle();
-          sssBox.draw();
-        }
+          // sssBox.draw();
+        // }
         break;
       default:  //assume GUI_PAGE_CHANNEL_ONOFF:
         //show channel buttons
@@ -999,8 +956,6 @@ class Gui_Manager {
     showPolarityButton.setIsActive(false);
     maxDisplayFreqButton.setIsActive(false);
     biasButton.setIsActive(false);
-    // set out new Button inactive
-    sampleMenuButton.setIsActive(false);
   }
 
 };
