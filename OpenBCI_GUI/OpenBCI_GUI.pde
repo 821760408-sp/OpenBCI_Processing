@@ -524,9 +524,9 @@ void systemDraw(){ //for drawing to the screen
     }
 
     //wait 1 second for GUI to reinitialize
-    if ((millis() - timeOfGUIreinitialize) > reinitializeGUIdelay){
+    if ((millis() - timeOfGUIreinitialize) > reinitializeGUIdelay) {
       // println("attempting to draw GUI...");
-      try{
+      try {
         // println("GUI DRAW!!! " + millis());
         pushStyle();
           fill(255);
@@ -553,7 +553,7 @@ void systemDraw(){ //for drawing to the screen
   }
 
   //control panel
-  if(controlPanel.isOpen){
+  if (controlPanel.isOpen) {
     controlPanel.draw();
   }
   controlPanelCollapser.draw();
@@ -821,13 +821,10 @@ void mousePressed() {
 
   verbosePrint("OpenBCI_GUI: mousePressed: mouse pressed");
 
-  //if not in initial setup...
-  if (systemMode >= 10) {
+  if (systemMode >= 10) { //if not in initial setup...
 
-    //limit interactivity of main GUI if control panel is open
-    if (controlPanel.isOpen == false) {
+    if (controlPanel.isOpen == false) { //Should limit interactivity of main GUI if control panel is open
       //was the stopButton pressed?
-
       gui.mousePressed(); // trigger mousePressed function in GUI
       //most of the logic below should be migrated into the Gui_manager specific function above
 
@@ -877,7 +874,6 @@ void mousePressed() {
         case Gui_Manager.GUI_PAGE_HEADPLOT_SETUP:
           if (gui.sampleButton.isMouseHere()) {
             gui.sampleButton.setIsActive(!gui.sampleButton.isActive());
-            // gui.toggleChannelList();
           }
           if (gui.intensityFactorButton.isMouseHere()) {
             gui.intensityFactorButton.setIsActive(true);
@@ -933,11 +929,7 @@ void mousePressed() {
         //toggle the display of the montage values
         gui.showMontageValues  = !gui.showMontageValues;
       }
-
-
     }
-
-
   }
 
   //=============================//
@@ -954,7 +946,7 @@ void mousePressed() {
       controlPanel.isOpen = true;
     }
   } else {
-    if(controlPanel.isOpen){
+    if (controlPanel.isOpen) {
       controlPanel.CPmousePressed();
     }
   }

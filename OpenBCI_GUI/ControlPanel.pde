@@ -111,7 +111,8 @@ class ControlPanel {
     globalPadding = 10;  //controls the padding of all elements on the control panel
     globalBorder = 0;   //controls the border of all elements in the control panel ... using processing's stroke() instead
 
-    cp5 = new ControlP5(mainClass); 
+    cp5 = new ControlP5(mainClass);
+    cp5.setVisible(true); //set cp5 visible all the time, use individual setVisible() to control visibility
 
     //boxes active when eegDataSource = Normal (OpenBCI) 
     dataSourceBox = new DataSourceBox(x, y, w, h, globalPadding);
@@ -127,17 +128,18 @@ class ControlPanel {
     initBox = new InitBox(x, (dataSourceBox.y + dataSourceBox.h), w, h, globalPadding);
   }
 
-  public void update() {
+  public void update() { //OpenBCI_GUI::systemUpdate() will call controlPanel:ControlPanel::update()
+
     //toggle view of cp5 / serial list selection table
-    if (isOpen) { // if control panel is open
-      if (!cp5.isVisible()) {  //and cp5 is not visible
-        cp5.show(); // shot it
-      }
-    } else { //the opposite of above
-      if (cp5.isVisible()) {
-        cp5.hide();
-      }
-    }
+    // if (isOpen) { // if control panel is open
+    //   if (!cp5.isVisible()) {  //and cp5 is not visible
+    //     cp5.show(); // show it
+    //   }
+    // } else {
+    //   if (cp5.isVisible()) {
+    //     cp5.hide();
+    //   }
+    // }
 
     //update all boxes if they need to be
     dataSourceBox.update();
@@ -180,12 +182,17 @@ class ControlPanel {
 
     if (systemMode == 10) {
       drawStopInstructions = true;
+      cp5.get(Textfield.class, "fileName").setVisible(false); //make sure the data file field is visible
+      cp5.get(MenuList.class, "sourceList").setVisible(false);
+      cp5.get(MenuList.class, "serialList").setVisible(false);
+      cp5.get(MenuList.class, "sdTimes").setVisible(false);
     }
 
     if (systemMode != 10) { // only draw control panel boxes if system running is false
       dataSourceBox.draw();
       drawStopInstructions = false;
-      cp5.setVisible(true);//make sure controlP5 elements are visible
+      cp5.get(MenuList.class, "sourceList").setVisible(true); //display source list when systemMode != 10
+      // cp5.setVisible(true);//make sure controlP5 elements are visible //COMMENTED
       if (eegDataSource == 0) {	//when data source is from OpenBCI
         serialBox.draw();
         dataLogBox.draw();
@@ -195,7 +202,6 @@ class ControlPanel {
         cp5.get(MenuList.class, "serialList").setVisible(true); //make sure the serialList menulist is visible
         cp5.get(MenuList.class, "sdTimes").setVisible(true); //make sure the SD time record options menulist is visible
         //make sure serial list is visible
-        //set other CP5 controllers invisible
       } else if (eegDataSource == 1) { //when data source is from playback file
         playbackFileBox.draw();
         sdConverterBox.draw();
@@ -215,22 +221,20 @@ class ControlPanel {
         cp5.get(MenuList.class, "serialList").setVisible(false);
         cp5.get(MenuList.class, "sdTimes").setVisible(false);
       }
-    } else {
-      cp5.setVisible(false); // if isRunning is true, hide all controlP5 elements
     }
 
     //draw the box that tells you to stop the system in order to edit control settings
     if (drawStopInstructions) {
       pushStyle();
-      fill(boxColor);
-      strokeWeight(1);
-      stroke(boxStrokeColor);
-      rect(x, y, w, dataSourceBox.h); //draw background of box
-      String stopInstructions = "Press the \"STOP SYSTEM\" button to edit system settings.";
-      textAlign(CENTER, TOP);
-      textFont(f2);
-      fill(bgColor);
-      text(stopInstructions, x + globalPadding*2, y + globalPadding*4, w - globalPadding*4, dataSourceBox.h - globalPadding*4);
+        fill(boxColor);
+        strokeWeight(1);
+        stroke(boxStrokeColor);
+        rect(x, y, w, dataSourceBox.h); //draw background of box
+        String stopInstructions = "Press the \"STOP SYSTEM\" button to edit system settings.";
+        textAlign(CENTER, TOP);
+        textFont(f2);
+        fill(bgColor);
+        text(stopInstructions, x + globalPadding*2, y + globalPadding*4, w - globalPadding*4, dataSourceBox.h - globalPadding*4);
       popStyle();
     }
   }
@@ -474,44 +478,6 @@ class DataSourceBox {
     //checkboxes of system states
   }
 };
-
-class SampleSourceBox {
-  int x, y, w, h, padding; //size and position
-
-  /**
-   * Constructor
-   */
-  SampleSourceBox (int _x, int _y, int _w, int _h, int _padding) {
-    x = _x;
-    y = _y;
-    w = _w;
-    h = _h;
-    padding = _padding;
-
-    sampleList = new MenuList(cp5, "sampleList", w - padding*2, 192, f2);
-    sampleList.setPosition(x + padding, y + padding*2 + 13);
-    for (int i = 0; i < nchan; ++i) { //nchan is a global variable defined in OpenBCI_GUI.pde
-      sampleList.addItem(makeItem("Channel " + i));
-    }
-    sampleList.scrollerLength = 10;
-  }
-
-  public void update () {
-  }
-
-  public void draw () {
-    pushStyle();
-      fill(boxColor);
-      stroke(boxStrokeColor);
-      strokeWeight(1);
-      rect(x, y, w, h);
-      fill(bgColor);
-      textFont(f1);
-      textAlign(LEFT, TOP);
-      text("ADD SAMPLE TO", x + padding, y + padding);
-    popStyle();
-  }
-}
 
 class SerialBox {
   int x, y, w, h, padding; //size and position

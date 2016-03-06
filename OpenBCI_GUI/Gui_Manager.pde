@@ -295,7 +295,7 @@ class Gui_Manager {
 
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset, gutter_between_buttons); //int win_x = 1024; window width
     println("audio sample button x: " + x);
-    sampleButton = new Button(x, y, w, h, "Audio Samples", fontInfo.buttonLabel_size);
+    sampleButton = new Button(x, y, w, h, "Audio\nSamples", fontInfo.buttonLabel_size);
     sampleButton.setIsActive(false);
     sampleButton.makeDropdownButton(true);
     
@@ -875,13 +875,17 @@ class Gui_Manager {
     showMontageButton.draw();
     showChannelControllerButton.draw();
 
-    if (sampleButton.isActive()) sampleBox.draw();
+    if (sampleButton.isActive() && systemMode == 10) { //When Audio Sample button clicked, and system running
+      sampleBox.draw();
+      cp5.get(MenuList.class, "sampleList").setVisible(true);
+    } else {
+      cp5.get(MenuList.class, "sampleList").setVisible(false);
+    }
   }
 
   public void mousePressed(){
     verbosePrint("Gui_Manager: mousePressed: mouse pressed.");
-    //if showMontage button pressed
-    if (showMontageButton.isMouseHere()) {
+    if (showMontageButton.isMouseHere()) { //if showMontage button pressed
       //turn off visibility of channel full controller
       cc.showFullController = false;
       showMontageButton.setIsActive(true);
@@ -889,8 +893,7 @@ class Gui_Manager {
       showChannelControllerButton.setIsActive(false);
       showChannelControllerButton.buttonFont = f2;
     }
-    //if showChannelController is pressed
-    if (showChannelControllerButton.isMouseHere()) {
+    if (showChannelControllerButton.isMouseHere()) { //if showChannelController is pressed
       cc.showFullController = true;
       showMontageButton.setIsActive(false);
       showMontageButton.buttonFont = f2;
@@ -900,15 +903,14 @@ class Gui_Manager {
 
     //if cursor inside channel controller
     // if(mouseX >= cc.x1 && mouseX <= (cc.x2 - cc.w2) && mouseY >= cc.y1 && mouseY <= (cc.y1 + cc.h1) ){
-      verbosePrint("Gui_Manager: mousePressed: Channel Controller mouse pressed...");
-      cc.mousePressed();
+    verbosePrint("Gui_Manager: mousePressed: Channel Controller mouse pressed...");
+    cc.mousePressed();
     // }
 
     //turn off visibility of graph
     // turn on drawing and interactivity of channel controller
 
     //however, the on/off & impedance values must show to the right at all times ... so it should change a boolean in ChannelController
-
   }
 
   public void mouseReleased(){
@@ -925,5 +927,43 @@ class Gui_Manager {
     showPolarityButton.setIsActive(false);
     maxDisplayFreqButton.setIsActive(false);
     biasButton.setIsActive(false);
+  }
+};
+
+class SampleSourceBox {
+  int x, y, w, h, padding; //size and position
+
+  /**
+   * Constructor
+   */
+  SampleSourceBox (int _x, int _y, int _w, int _h, int _padding) {
+    x = _x;
+    y = _y;
+    w = _w;
+    h = _h;
+    padding = _padding;
+
+    sampleList = new MenuList(cp5, "sampleList", w - padding*2, 192, f2);
+    sampleList.setPosition(x + padding, y + padding*2 + 13);
+    for (int i = 0; i < nchan; ++i) { //nchan is a global variable defined in OpenBCI_GUI.pde
+      sampleList.addItem(makeItem("Channel " + (i + 1)));
+    }
+    sampleList.scrollerLength = 10;
+  }
+
+  public void update () {
+  }
+
+  public void draw () {
+    pushStyle();
+      fill(boxColor);
+      stroke(boxStrokeColor);
+      strokeWeight(1);
+      rect(x, y, w, h);
+      fill(bgColor);
+      textFont(f1);
+      textAlign(LEFT, TOP);
+      text("ADD SAMPLE TO", x + padding, y + padding);
+    popStyle();
   }
 };
