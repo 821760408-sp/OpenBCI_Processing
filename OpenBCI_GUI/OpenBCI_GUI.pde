@@ -257,8 +257,8 @@ void initSystem(){
     // dataPacketBuff[i] = new DataPacket_ADS1299(OpenBCI_Nchannels+n_aux_ifEnabled);
     dataPacketBuff[i] = new DataPacket_ADS1299(nchan,n_aux_ifEnabled);
   }
-  eegProcessing = new EEG_Processing(nchan,openBCI.get_fs_Hz());
-  eegProcessing_user = new EEG_Processing_User(nchan,openBCI.get_fs_Hz());
+  eegProcessing = new EEG_Processing(nchan, openBCI.get_fs_Hz());
+  eegProcessing_user = new EEG_Processing_User(nchan, openBCI.get_fs_Hz());
 
   //initialize the data
   prepareData(dataBuffX, dataBuffY_uV,openBCI.get_fs_Hz());
@@ -524,7 +524,7 @@ void systemDraw(){ //for drawing to the screen
     }
 
     //wait 1 second for GUI to reinitialize
-    if((millis() - timeOfGUIreinitialize) > reinitializeGUIdelay){
+    if ((millis() - timeOfGUIreinitialize) > reinitializeGUIdelay){
       // println("attempting to draw GUI...");
       try{
         // println("GUI DRAW!!! " + millis());
@@ -540,8 +540,7 @@ void systemDraw(){ //for drawing to the screen
         reinitializeGUIdelay = reinitializeGUIdelay * 2;
         println("OpenBCI_GUI: systemDraw: New GUI reinitialize delay = " + reinitializeGUIdelay);
       }
-    }
-    else{
+    } else {
       //reinitializing GUI after resize
       println("OpenBCI_GUI: systemDraw: reinitializing GUI after resize... not drawing GUI");
     }
@@ -732,13 +731,13 @@ void processNewData() {
   } //end the loop over channels.
 
   //apply additional processing for the time-domain montage plot (ie, filtering)
-  eegProcessing.process(yLittleBuff_uV,dataBuffY_uV,dataBuffY_filtY_uV,fftBuff);
+  eegProcessing.process(yLittleBuff_uV, dataBuffY_uV, dataBuffY_filtY_uV, fftBuff);
 
   //apply user processing
   // ...yLittleBuff_uV[Ichan] is the most recent raw data since the last call to this processing routine
   // ...dataBuffY_filtY_uV[Ichan] is the full set of filtered data as shown in the time-domain plot in the GUI
   // ...fftBuff[Ichan] is the FFT data structure holding the frequency spectrum as shown in the freq-domain plot in the GUI
-  eegProcessing_user.process(yLittleBuff_uV,dataBuffY_uV,dataBuffY_filtY_uV,fftBuff);
+  eegProcessing_user.process(yLittleBuff_uV, dataBuffY_uV, dataBuffY_filtY_uV, fftBuff);
 
   //look to see if the latest data is railed so that we can notify the user on the GUI
   for (int Ichan=0;Ichan < nchan; Ichan++) is_railed[Ichan].update(dataPacketBuff[lastReadDataPacketInd].values[Ichan]);
@@ -823,10 +822,10 @@ void mousePressed() {
   verbosePrint("OpenBCI_GUI: mousePressed: mouse pressed");
 
   //if not in initial setup...
-  if(systemMode >= 10){
+  if (systemMode >= 10) {
 
     //limit interactivity of main GUI if control panel is open
-    if(controlPanel.isOpen == false){
+    if (controlPanel.isOpen == false) {
       //was the stopButton pressed?
 
       gui.mousePressed(); // trigger mousePressed function in GUI
@@ -876,6 +875,10 @@ void mousePressed() {
           // }
           // break;
         case Gui_Manager.GUI_PAGE_HEADPLOT_SETUP:
+          if (gui.sampleButton.isMouseHere()) {
+            gui.sampleButton.setIsActive(!gui.sampleButton.isActive());
+            // gui.toggleChannelList();
+          }
           if (gui.intensityFactorButton.isMouseHere()) {
             gui.intensityFactorButton.setIsActive(true);
             gui.incrementVertScaleFactor();
@@ -904,12 +907,6 @@ void mousePressed() {
             gui.maxDisplayFreqButton.setIsActive(true);
             gui.incrementMaxDisplayFreq();
           }
-          // // add our sampleButton behavior here
-          // if (gui.sampleButton.isMouseHere()) {
-          //   gui.sampleButton.setIsActive(true);
-          //   gui.toggleSampleBlock();
-          // }
-
     //      //check the detection button
     //      if (gui.detectButton.updateIsMouseHere()) {
     //       gui.detectButton.setIsActive(true);
@@ -920,7 +917,6 @@ void mousePressed() {
     //        gui.spectrogramButton.setIsActive(true);
     //        toggleSpectrogramState();
     //      }
-
           break;
         //default:
       }
@@ -950,30 +946,27 @@ void mousePressed() {
 
   //was control panel button pushed
   if (controlPanelCollapser.isMouseHere()) {
-    if(controlPanelCollapser.isActive && systemMode == 10){
+    if (controlPanelCollapser.isActive && systemMode == 10) {
       controlPanelCollapser.setIsActive(false);
       controlPanel.isOpen = false;
-    }
-    else{
+    } else {
       controlPanelCollapser.setIsActive(true);
       controlPanel.isOpen = true;
     }
-  } else{
+  } else {
     if(controlPanel.isOpen){
       controlPanel.CPmousePressed();
     }
   }
 
   //interacting with control panel
-  if(controlPanel.isOpen){
+  if (controlPanel.isOpen) {
     //close control panel if you click outside...
-    if(systemMode == 10){
-      if(mouseX > 0 && mouseX < controlPanel.w && mouseY > 0 && mouseY < controlPanel.initBox.y+controlPanel.initBox.h){
+    if (systemMode == 10) {
+      if (mouseX > 0 && mouseX < controlPanel.w && mouseY > 0 && mouseY < controlPanel.initBox.y+controlPanel.initBox.h) {
         println("OpenBCI_GUI: mousePressed: clicked in CP box");
         controlPanel.CPmousePressed();
-      }
-      //if clicked out of panel
-      else{
+      } else { //if clicked out of panel
         println("OpenBCI_GUI: mousePressed: outside of CP clicked");
         controlPanel.isOpen = false;
         controlPanelCollapser.setIsActive(false);
@@ -1006,8 +999,7 @@ void mouseReleased() {
     controlPanel.CPmouseReleased();
   }
 
-  if(systemMode >= 10){
-
+  if (systemMode >= 10) {
     gui.mouseReleased();
     redrawScreenNow = true;  //command a redraw of the GUI whenever the mouse is released
   }

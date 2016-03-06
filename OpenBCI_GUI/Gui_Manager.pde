@@ -47,6 +47,7 @@ class Gui_Manager {
   Button maxDisplayFreqButton;
   Button showPolarityButton;
   Button sampleButton; // toggles a menu for assigning audio samples to channels
+  SampleSourceBox sampleBox;
   // boolean drawSampleBlock = false;
 
   //these two buttons toggle between EEG graph state (they are mutually exclusive states)
@@ -294,14 +295,16 @@ class Gui_Manager {
 
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset, gutter_between_buttons); //int win_x = 1024; window width
     println("audio sample button x: " + x);
-    sampleButton = new Button(x, y, w, h, "Add\nAudio Samples", fontInfo.buttonLabel_size);
+    sampleButton = new Button(x, y, w, h, "Audio Samples", fontInfo.buttonLabel_size);
     sampleButton.setIsActive(false);
-    // sampleButton.makeDropdownButton(true);
-    // x = 2 + sampleButton.but_x;
-    // y = 4 + sampleButton.but_dy;
-    // w = sampleButton.but_dx * 4;
-    // h = height - int(helpWidget.h);
-    // sssBox = new SampleBlock(x, y, w, h, 10);
+    sampleButton.makeDropdownButton(true);
+    
+    int boxX = x;
+    int boxY = 2 + sampleButton.but_dy;
+    int boxW = sampleButton.but_dx * 3 - 10;
+    int boxH = 235;
+    int padding = 10;
+    sampleBox = new SampleSourceBox(boxX, boxY, boxW, boxH, padding);
 
     set_vertScaleAsLog(true);
 
@@ -316,10 +319,6 @@ class Gui_Manager {
     setGUIpage(GUI_PAGE_HEADPLOT_SETUP);
   }
 
-  // public void toggleSampleBlock () {
-  //   drawSampleBlock = !drawSampleBlock;
-  // }
-
   private int calcButtonXLocation(int Ibut,int win_x,int w, int xoffset, float gutter_between_buttons) {
     // return xoffset + (Ibut * (w + (int)(gutter_between_buttons*win_x)));
     return width - ((Ibut+1) * (w + 2)) - 1;
@@ -330,12 +329,12 @@ class Gui_Manager {
     updateVertScale();
   }
   public void setVertScaleFactor_ind(int ind) {
-    vertScaleFactor_ind = max(0,ind);
+    vertScaleFactor_ind = max(0, ind);
     if (ind >= vertScaleFactor.length) vertScaleFactor_ind = 0;
     updateVertScale();
   }
   public void incrementVertScaleFactor() {
-    setVertScaleFactor_ind(vertScaleFactor_ind+1);  //wrap-around is handled inside the function
+    setVertScaleFactor_ind(vertScaleFactor_ind + 1);  //wrap-around is handled inside the function
   }
   public void updateVertScale() {
     vertScale_uV = default_vertScale_uV*vertScaleFactor[vertScaleFactor_ind];
@@ -791,18 +790,15 @@ class Gui_Manager {
   }
 
   public void draw() {
-    if(!drawUser){
+    if (!drawUser) {
       headPlot1.draw();
     }
 
-    //draw montage or spectrogram
-    if (showSpectrogram == false) {
-
+    if (showSpectrogram == false) { //draw montage or spectrogram
       //show time-domain montage, only if full channel controller is not visible, to save some processing
       gMontage.draw();
 
-      //add annotations
-      if (showMontageValues) {
+      if (showMontageValues) { //add annotations
         for (int Ichan = 0; Ichan < chanValuesMontage.length; Ichan++) {
           chanValuesMontage[Ichan].draw();
         }
@@ -835,7 +831,7 @@ class Gui_Manager {
     //commented out because pages 1-2 are being moved to the left of the EEG montage
     // guiPageButton.draw();
 
-    switch (guiPage) {  //the rest of the elements depend upon what GUI page we're on
+    switch (guiPage) { //the rest of the elements depend upon what GUI page we're on
       //note: GUI_PAGE_CHANNEL_ON_OFF is the default at the end
       case GUI_PAGE_IMPEDANCE_CHECK:
         //show impedance buttons and text
@@ -858,26 +854,6 @@ class Gui_Manager {
         smoothingButton.draw();
         showPolarityButton.draw();
         maxDisplayFreqButton.draw();
-        
-        // // draw dropdown list according to drawSSSBOX flag
-        // if (drawSampleBlock) {
-        //   int x = sampleButton.but_x;
-        //   int y = 2 + sampleButton.but_dy;
-        //   int w = sampleButton.but_dx * 5;
-        //   int h = height - int(helpWidget.h);
-          //pushStyle();
-          //fill(boxColor);
-          //strokeWeight(1);
-          //stroke(boxStrokeColor);
-          //rect(x, y, w, sssBox.h); //draw background of box
-          //String stopInstructions = "Press the \"STOP SYSTEM\" button to edit system settings.";
-          //textAlign(CENTER, TOP);
-          //textFont(f2);
-          //fill(bgColor);
-          //text(stopInstructions, x + 10 * 2, y + 10 * 4, w - 10 * 4, sssBox.h - 10 * 4);
-          //popStyle();
-          // sssBox.draw();
-        // }
         break;
       default:  //assume GUI_PAGE_CHANNEL_ONOFF:
         //show channel buttons
@@ -892,11 +868,6 @@ class Gui_Manager {
       }
     }
 
-    // if(controlPanelCollapser.isActive){
-    //   controlPanel.draw();
-    // }
-    // controlPanelCollapser.draw();
-
     cc.draw();
     if(cc.showFullController == false){
       titleMontage.draw();
@@ -904,12 +875,13 @@ class Gui_Manager {
     showMontageButton.draw();
     showChannelControllerButton.draw();
 
+    if (sampleButton.isActive()) sampleBox.draw();
   }
 
   public void mousePressed(){
     verbosePrint("Gui_Manager: mousePressed: mouse pressed.");
     //if showMontage button pressed
-    if(showMontageButton.isMouseHere()){
+    if (showMontageButton.isMouseHere()) {
       //turn off visibility of channel full controller
       cc.showFullController = false;
       showMontageButton.setIsActive(true);
@@ -918,7 +890,7 @@ class Gui_Manager {
       showChannelControllerButton.buttonFont = f2;
     }
     //if showChannelController is pressed
-    if(showChannelControllerButton.isMouseHere()){
+    if (showChannelControllerButton.isMouseHere()) {
       cc.showFullController = true;
       showMontageButton.setIsActive(false);
       showMontageButton.buttonFont = f2;
@@ -932,7 +904,6 @@ class Gui_Manager {
       cc.mousePressed();
     // }
 
-
     //turn off visibility of graph
     // turn on drawing and interactivity of channel controller
 
@@ -945,9 +916,7 @@ class Gui_Manager {
     verbosePrint("Gui_Manager: mouseReleased(): Channel Controller mouse released...");
     cc.mouseReleased();
 
-
     stopButton.setIsActive(false);
-    // guiPageButton.setIsActive(false);
     intensityFactorButton.setIsActive(false);
     loglinPlotButton.setIsActive(false);
     filtBPButton.setIsActive(false);
@@ -957,5 +926,4 @@ class Gui_Manager {
     maxDisplayFreqButton.setIsActive(false);
     biasButton.setIsActive(false);
   }
-
 };

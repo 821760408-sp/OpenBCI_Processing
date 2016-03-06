@@ -485,7 +485,7 @@ class SampleSourceBox {
     x = _x;
     y = _y;
     w = _w;
-    h = 235;
+    h = _h;
     padding = _padding;
 
     sampleList = new MenuList(cp5, "sampleList", w - padding*2, 192, f2);
@@ -501,14 +501,14 @@ class SampleSourceBox {
 
   public void draw () {
     pushStyle();
-    fill(boxColor);
-    stroke(boxStrokeColor);
-    strokeWeight(1);
-    rect(x, y, w, h);
-    fill(bgColor);
-    textFont(f1);
-    textAlign(LEFT, TOP);
-    text("ADD SAMPLE TO", x + padding, y + padding);
+      fill(boxColor);
+      stroke(boxStrokeColor);
+      strokeWeight(1);
+      rect(x, y, w, h);
+      fill(bgColor);
+      textFont(f1);
+      textAlign(LEFT, TOP);
+      text("ADD SAMPLE TO", x + padding, y + padding);
     popStyle();
   }
 }

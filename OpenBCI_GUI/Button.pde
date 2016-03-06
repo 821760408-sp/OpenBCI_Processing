@@ -121,7 +121,6 @@ class Button {
     }else{
       noStroke();
     }
-    // noStroke();
     rect(but_x,but_y,but_dx,but_dy);
     
     //draw the text
