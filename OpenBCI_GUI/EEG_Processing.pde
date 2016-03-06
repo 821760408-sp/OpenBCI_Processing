@@ -6,39 +6,49 @@ boolean readyToPlay = false;
 boolean channel1ToPlay = false;
 
 class EEG_Processing_User {
-  private float fs_Hz;  //sample rate
-  private int nchan;
+  private float fs;          //sampling frequency
+  private int nchan;         //number of channels
 
-  boolean isTriggered = false;  //boolean to keep track of when the trigger condition is met
-  float upperThreshold = 25;  //default uV upper threshold value ... this will automatically change over time
-  float lowerThreshold = 0;  //default uV lower threshold value ... this will automatically change over time
-  float channel1UpperThreshold = 25;
-  float channel1LowerThreshold = 0;
-  int averagePeriod = 250;  //number of data packets to average over (250 = 1 sec)
-  int thresholdPeriod = 1250;  //number of packets
-
-  float thresholdRes = 2.0; // 200%
-
-  int channel1 = 1 - 1;
-  int ourChan = 2 - 1;  //channel being monitored ... "3 - 1" means channel 3 (with a 0 index)
-  float myAverage = 0.0;   //this will change over time ... used for calculations below
-  float channel1Average = 0.0;   //this will change over time ... used for calculations below
-
-  float lastAve = 0.0; // store the last average value
-
-  float acceptableLimitUV = 255;  //uV values above this limit are excluded, as a result of them almost certainly being noise...
-
+  int averagePeriod;         //number of data packets to average over [250 = 1 sec]
+  boolean[] isTriggered;     //boolean to keep track of when the trigger condition is met
+  float[] upperThresholds;   //default uV upper threshold value ... this will automatically change over time
+  float[] lowerThresholds;   //default uV lower threshold value ... this will automatically change over time
+  float[] tripUpperThresholds;
+  float[] tripLowerThresholds;
+  float[] averages;          //this will change over time ... used for calculations below
+  float[] acceptableLimits;  //uV values above this limit are excluded, as a result of them almost certainly being noise...
   //if writing to a serial port
-  float output = 0; //value between 0-255 that is the relative position of the current uV average between the rolling lower and upper uV thresholds
-  float channel1Output = 0;
-  float output_normalized = 0;  //converted to between 0-1
-  float channel1_output_normalized = 0;
-  float output_adjusted = 0;  //adjusted depending on range that is expected on the other end, ie 0-255?
+  float[] outputs;           //value between 0-255 that is the relative position of the current uV average between the rolling lower and upper uV thresholds
+  float[] outputsNormalized; //converted to between 0-1
 
-  //class constructor
-  EEG_Processing_User(int NCHAN, float sample_rate_Hz) {
+  /**
+   * Constructor
+   * @param NCHAN number of total channels
+   * @param FS sampling frequency used
+   */
+  EEG_Processing_User(int NCHAN, float FS) {
     nchan = NCHAN;
-    fs_Hz = sample_rate_Hz;
+    fs = FS;
+    averagePeriod = 250;
+    isTriggered = new boolean[nchan];
+    upperThresholds = new float[nchan];
+    lowerThresholds = new float[nchan];
+    tripUpperThresholds = new float[nchan];
+    tripLowerThresholds = new float[nchan];
+    averages = new float[nchan];
+    acceptableLimits = new float[nchan];
+    outputs = new float[nchan];
+    outputsNormalized = new float[nchan];
+
+    for (int i = 0; i < isTriggered.length; ++i) isTriggered[i] = false;
+    for (int i = 0; i < upperThresholds.length; ++i) upperThresholds[i] = 25.0;
+    for (int i = 0; i < lowerThresholds.length; ++i) lowerThresholds[i] = 0.0;
+    for (int i = 0; i < tripUpperThresholds.length; ++i) tripUpperThresholds[i] = 0.5;
+    for (int i = 0; i < tripUpperThresholds.length; ++i) tripLowerThresholds[i] = 0.15;
+    for (int i = 0; i < averages.length; ++i) averages[i] = 0.0;
+    for (int i = 0; i < acceptableLimits.length; ++i) acceptableLimits[i] = 0.0;
+    for (int i = 0; i < outputs.length; ++i) outputs[i] = 0.0;
+    for (int i = 0; i < outputsNormalized.length; ++i) outputsNormalized[i] = 0.0;
   }
 
   /**
@@ -50,181 +60,91 @@ class EEG_Processing_User {
    */
   public void process(float[][] dataNewest, float[][] dataLong, float[][] dataFiltered, FFT[] fftData) {
 
-    for (int i = dataFiltered[ourChan].length - averagePeriod; i < dataFiltered[ourChan].length; i++) {
-       if (dataFiltered[ourChan][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
-         myAverage += abs(dataFiltered[ourChan][i]);  //add value to average ... we will soon divide by # of packets
-       }
-    }
+    /* TIME DOMAIN PROCESSING */
 
-    myAverage = myAverage / float(averagePeriod); //finishing the average
+    for (int ichan = 0; ichan < nchan; ++ichan) {
+      for (int i = dataFiltered[ichan].length - averagePeriod; i < dataFiltered[ichan].length; ++i) {
+        if (dataFiltered[ichan][i] <= acceptableLimits[ichan]) { //prevent BIG spikes from effecting the average
+          averages[ichan] += abs(dataFiltered[ichan][i]);         //add value to average ... we will soon divide by # of packets
+        } else {
+          averages[ichan] += acceptableLimits[ichan];
+        }
+      }
+      averages[ichan] /= float(averagePeriod);
 
-    //--------------------- some conditionals -------------------------
+      //single threshold method
+      if (averages[ichan] >= upperThresholds[ichan]) upperThresholds[ichan] = averages[ichan];
+      if (averages[ichan] <= lowerThresholds[ichan]) lowerThresholds[ichan] = averages[ichan];
+      outputsNormalized[ichan] = map(averages[ichan], lowerThresholds[ichan], upperThresholds[ichan], 0, 1);  
 
-    if(myAverage >= upperThreshold && myAverage <= acceptableLimitUV){ //
-       upperThreshold = myAverage;
-    }
+      println("normalized output (channel " + ichan + "): " + outputsNormalized[ichan]);
 
-    if(myAverage <= lowerThreshold){
-       lowerThreshold = myAverage;
-    }
+      if (outputsNormalized[ichan] >= tripUpperThresholds[ichan] && !isTriggered[ichan]) {
+        println("channel " + ichan + " triggered");
+        // drum.trigger();
+        isTriggered[ichan] = true;
+      }
 
-    if(upperThreshold >= 25){
-      upperThreshold -= (upperThreshold - 25)/(frameRate * 1); //have upper threshold creep downwards to keep range tight
-    }
+      if (isTriggered[ichan] && outputsNormalized[ichan] <= tripLowerThresholds[ichan]) {
+        isTriggered[ichan] = false;
+        println("channel " + ichan + " ready");
+      }
 
-    if(lowerThreshold <= 15){
-      lowerThreshold += (15 - lowerThreshold)/(frameRate * 1); //have lower threshold creep upwards to keep range tight
-    }
-
-    println("inMoov_output: | " + output + " |");
-    // if(inMoov_output >= 100){
-    //   println("DRUM!!!!");
-    //   drum1.trigger();
-    // }
-
-    if(output >= 25 && readyToPlay == true){
-      println("DRUM!!!!");
-      drum.trigger();
-      readyToPlay = false;
-    }
-
-    if(readyToPlay == false && output <= 20){
-      readyToPlay = true;
-      println("READY!");
-    }
-
-    // drum1.play();
-    // inMoov_serial.write((char)inMoov_output);
-
-//    if(myAverage >= upperThreshold && isTriggered == false){
-//      isTriggered = true;
-//      println("SENDING O!");
-//      openBCI.serial_openBCI.write('o');
-//    }
-//    if(myAverage <= lowerThreshold && isTriggered == true){
-//      isTriggered = false;
-//      println("SENDING G!");
-//      openBCI.serial_openBCI.write('g');
-//    }
-
-    output = map(myAverage, lowerThreshold, upperThreshold, 0, 250);
-    output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
-
-
-    for (int i = dataFiltered[channel1].length - averagePeriod; i < dataFiltered[channel1].length; i++) {
-       if (dataFiltered[channel1][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
-         channel1Average += abs(dataFiltered[channel1][i]);  //add value to average ... we will soon divide by # of packets
-       }
-    }
-
-    channel1Average = channel1Average / float(averagePeriod); //finishing the average
-
-    //--------------------- some conditionals -------------------------
-
-    if(channel1Average >= channel1UpperThreshold && channel1Average <= acceptableLimitUV){ //
-       channel1UpperThreshold = channel1Average;
-    }
-
-    if(channel1Average <= channel1LowerThreshold){
-       channel1LowerThreshold = channel1Average;
-    }
-
-    if(channel1UpperThreshold >= 25){
-      channel1UpperThreshold -= (channel1UpperThreshold - 25)/(frameRate * 1); //have upper threshold creep downwards to keep range tight
-    }
-
-    if(channel1LowerThreshold <= 15){
-      channel1LowerThreshold += (15 - channel1LowerThreshold)/(frameRate * 1); //have lower threshold creep upwards to keep range tight
-    }
-
-    println("inMoov_output: | " + output + " |");
-    // if(inMoov_output >= 100){
-    //   println("DRUM!!!!");
-    //   drum1.trigger();
-    // }
-
-    if(channel1Output >= 25 && readyToPlay == true){
-      println("DRUM!!!!");
-      drum.trigger();
-      channel1ToPlay = false;
-    }
-
-    if(readyToPlay == false && channel1Output <= 20){
-      channel1ToPlay = true;
-      println("READY!");
-    }
-
-    // drum1.play();
-    // inMoov_serial.write((char)inMoov_output);
-
-//    if(myAverage >= upperThreshold && isTriggered == false){
-//      isTriggered = true;
-//      println("SENDING O!");
-//      openBCI.serial_openBCI.write('o');
-//    }
-//    if(myAverage <= lowerThreshold && isTriggered == true){
-//      isTriggered = false;
-//      println("SENDING G!");
-//      openBCI.serial_openBCI.write('g');
-//    }
-
-    channel1Output = map(channel1Average, channel1LowerThreshold, channel1UpperThreshold, 0, 250);
-    //output_normalized = map(channel1Average, channel1LowerThreshold, channel1UpperThreshold, 0, 1);
-
-
-    //OR, you could loop over each EEG channel and do some sort of frequency-domain processing from the FFT data
-    float FFT_freq_Hz, FFT_value_uV;
-    for (int Ichan=0;Ichan < nchan; Ichan++) {
-      //loop over each new sample
-      for (int Ibin=0; Ibin < fftBuff[Ichan].specSize(); Ibin++){
-        FFT_freq_Hz = fftData[Ichan].indexToFreq(Ibin);
-        FFT_value_uV = fftData[Ichan].getBand(Ibin);
-
-        //add your processing here...
-
-
-
-        //println("EEG_Processing_User: Ichan = " + Ichan + ", Freq = " + FFT_freq_Hz + "Hz, FFT Value = " + FFT_value_uV + "uV/bin");
+      if (upperThresholds[ichan] >= 25.0) {
+        // upperThresholds[ichan] -= upperThresholds[ichan] / (frameRate * 5); //have upper threshold creep downwards to keep range tight
+        upperThresholds[ichan] *= .97;
+      }
+      if (lowerThresholds[ichan] <= 15.0) {
+        lowerThresholds[ichan] += lowerThresholds[ichan] / (frameRate * 5); //have lower threshold creep upwards to keep range tight
       }
     }
+
+    /* FREQUENCY DOMAIN PROCESSING */
+
+    // float FFT_freq_Hz, FFT_value_uV;
+    // for (int ichan = 0; ichan < nchan; ++ichan) {
+    //   //loop over each new sample
+    //   for (int ibin = 0; ibin < fftBuff[ichan].specSize(); ++ibin) {
+    //     FFT_freq_Hz = fftData[ichan].indexToFreq(ibin);
+    //     FFT_value_uV = fftData[ichan].getBand(ibin);
+    //   }
+    // }
   }
 
-  //Draw function added to render EMG feedback visualizer
+  /**
+   * Draw function added to render EMG feedback visualizer
+   */
   public void draw(){
-    pushStyle();
+    // pushStyle();
+    //   //circle for outer threshold
+    //   noFill();
+    //   stroke(0,255,0);
+    //   strokeWeight(2);
+    //   float scaleFactor = 1.25;
+    //   ellipse(3*(width/4), height/4, scaleFactor * upperThreshold, scaleFactor * upperThreshold);
 
-      //circle for outer threshold
-      noFill();
-      stroke(0,255,0);
-      strokeWeight(2);
-      float scaleFactor = 1.25;
-      ellipse(3*(width/4), height/4, scaleFactor * upperThreshold, scaleFactor * upperThreshold);
+    //   //circle for inner threshold
+    //   stroke(0,255,255);
+    //   ellipse(3*(width/4), height/4, scaleFactor * lowerThreshold, scaleFactor * lowerThreshold);
 
-      //circle for inner threshold
-      stroke(0,255,255);
-      ellipse(3*(width/4), height/4, scaleFactor * lowerThreshold, scaleFactor * lowerThreshold);
+    //   //realtime
+    //   fill(255,0,0, 125);
+    //   noStroke();
+    //   ellipse(3*(width/4), height/4, scaleFactor * myAverage, scaleFactor * myAverage);
 
-      //realtime
-      fill(255,0,0, 125);
-      noStroke();
-      ellipse(3*(width/4), height/4, scaleFactor * myAverage, scaleFactor * myAverage);
+    //   //draw background bar for mapped uV value indication
+    //   fill(0,255,255,125);
+    //   rect(7*(width/8), height/8, (width/32), (height/4));
 
-      //draw background bar for mapped uV value indication
-      fill(0,255,255,125);
-      rect(7*(width/8), height/8, (width/32), (height/4));
-
-      //draw real time bar of actually mapped value
-      fill(0,255,255);
-      rect(7*(width/8), 3*(height/8), (width/32), map(output_normalized, 0, 1, 0, (-1) * (height/4)));
-
-    popStyle();
+    //   //draw real time bar of actually mapped value
+    //   fill(0,255,255);
+    //   rect(7*(width/8), 3*(height/8), (width/32), map(outputNormalized, 0, 1, 0, (-1) * (height/4)));
+    // popStyle();
   }
-
-  //myAverage = 0.0;
 }
 
 class EEG_Processing {
-  private float fs_Hz;  //sample rate
+  private float fs;  //sample rate
   private int nchan;
   final int N_FILT_CONFIGS = 5;
   FilterConstants[] filtCoeff_bp = new FilterConstants[N_FILT_CONFIGS];
@@ -236,15 +156,15 @@ class EEG_Processing {
   float polarity[];
 
 
-  EEG_Processing(int NCHAN, float sample_rate_Hz) {
+  EEG_Processing(int NCHAN, float FS) {
     nchan = NCHAN;
-    fs_Hz = sample_rate_Hz;
+    fs = FS;
     data_std_uV = new float[nchan];
     polarity = new float[nchan];
 
 
     //check to make sure the sample rate is acceptable and then define the filters
-    if (abs(fs_Hz-250.0f) < 1.0) {
+    if (abs(fs-250.0f) < 1.0) {
       defineFilters();
     }
     else {
@@ -254,7 +174,7 @@ class EEG_Processing {
   }
 
   public float getSampleRateHz() {
-    return fs_Hz;
+    return fs;
   };
 
   //define filters...assumes sample rate of 250 Hz !!!!!
@@ -269,13 +189,13 @@ class EEG_Processing {
     for (int Ifilt=0; Ifilt < n_filt; Ifilt++) {
       switch (Ifilt) {
         case 0:
-          //60 Hz notch filter, assumed fs = 250 Hz.  2nd Order Butterworth: b, a = signal.butter(2,[59.0 61.0]/(fs_Hz / 2.0), 'bandstop')
+          //60 Hz notch filter, assumed fs = 250 Hz.  2nd Order Butterworth: b, a = signal.butter(2,[59.0 61.0]/(fs / 2.0), 'bandstop')
           b2 = new double[] { 9.650809863447347e-001, -2.424683201757643e-001, 1.945391494128786e+000, -2.424683201757643e-001, 9.650809863447347e-001 };
           a2 = new double[] { 1.000000000000000e+000, -2.467782611297853e-001, 1.944171784691352e+000, -2.381583792217435e-001, 9.313816821269039e-001  };
           filtCoeff_notch[Ifilt] =  new FilterConstants(b2, a2, "Notch 60Hz", "60Hz");
           break;
         case 1:
-          //50 Hz notch filter, assumed fs = 250 Hz.  2nd Order Butterworth: b, a = signal.butter(2,[49.0 51.0]/(fs_Hz / 2.0), 'bandstop')
+          //50 Hz notch filter, assumed fs = 250 Hz.  2nd Order Butterworth: b, a = signal.butter(2,[49.0 51.0]/(fs / 2.0), 'bandstop')
           b2 = new double[] { 0.96508099, -1.19328255,  2.29902305, -1.19328255,  0.96508099 };
           a2 = new double[] { 1.0       , -1.21449348,  2.29780334, -1.17207163,  0.93138168 };
           filtCoeff_notch[Ifilt] =  new FilterConstants(b2, a2, "Notch 50Hz", "50Hz");
@@ -384,16 +304,16 @@ class EEG_Processing {
   public void process(float[][] dataNewest, float[][] dataLong, float[][] dataFiltered, FFT[] fftData) {
 
     //loop over each EEG channel
-    for (int Ichan=0;Ichan < nchan; Ichan++) {
+    for (int ichan=0;ichan < nchan; ichan++) {
 
       //filter the data in the time domain
-      filterIIR(filtCoeff_notch[currentNotch_ind].b, filtCoeff_notch[currentNotch_ind].a, dataFiltered[Ichan]); //notch
-      filterIIR(filtCoeff_bp[currentFilt_ind].b, filtCoeff_bp[currentFilt_ind].a, dataFiltered[Ichan]); //bandpass
+      filterIIR(filtCoeff_notch[currentNotch_ind].b, filtCoeff_notch[currentNotch_ind].a, dataFiltered[ichan]); //notch
+      filterIIR(filtCoeff_bp[currentFilt_ind].b, filtCoeff_bp[currentFilt_ind].a, dataFiltered[ichan]); //bandpass
 
       //compute the standard deviation of the filtered signal...this is for the head plot
-      float[] fooData_filt = dataBuffY_filtY_uV[Ichan];  //use the filtered data
-      fooData_filt = Arrays.copyOfRange(fooData_filt, fooData_filt.length-((int)fs_Hz), fooData_filt.length);   //just grab the most recent second of data
-      data_std_uV[Ichan]=std(fooData_filt); //compute the standard deviation for the whole array "fooData_filt"
+      float[] fooData_filt = dataBuffY_filtY_uV[ichan];  //use the filtered data
+      fooData_filt = Arrays.copyOfRange(fooData_filt, fooData_filt.length-((int)fs), fooData_filt.length);   //just grab the most recent second of data
+      data_std_uV[ichan]=std(fooData_filt); //compute the standard deviation for the whole array "fooData_filt"
 
     } //close loop over channels
 
@@ -401,18 +321,18 @@ class EEG_Processing {
     int refChanInd = findMax(data_std_uV);
     //println("EEG_Processing: strongest chan (one referenced) = " + (refChanInd+1));
     float[] refData_uV = dataBuffY_filtY_uV[refChanInd];  //use the filtered data
-    refData_uV = Arrays.copyOfRange(refData_uV, refData_uV.length-((int)fs_Hz), refData_uV.length);   //just grab the most recent second of data
+    refData_uV = Arrays.copyOfRange(refData_uV, refData_uV.length-((int)fs), refData_uV.length);   //just grab the most recent second of data
 
 
     //compute polarity of each channel
-    for (int Ichan=0; Ichan < nchan; Ichan++) {
-      float[] fooData_filt = dataBuffY_filtY_uV[Ichan];  //use the filtered data
-      fooData_filt = Arrays.copyOfRange(fooData_filt, fooData_filt.length-((int)fs_Hz), fooData_filt.length);   //just grab the most recent second of data
+    for (int ichan=0; ichan < nchan; ichan++) {
+      float[] fooData_filt = dataBuffY_filtY_uV[ichan];  //use the filtered data
+      fooData_filt = Arrays.copyOfRange(fooData_filt, fooData_filt.length-((int)fs), fooData_filt.length);   //just grab the most recent second of data
       float dotProd = calcDotProduct(fooData_filt,refData_uV);
       if (dotProd >= 0.0f) {
-        polarity[Ichan]=1.0;
+        polarity[ichan]=1.0;
       } else {
-        polarity[Ichan]=-1.0;
+        polarity[ichan]=-1.0;
       }
 
     }
