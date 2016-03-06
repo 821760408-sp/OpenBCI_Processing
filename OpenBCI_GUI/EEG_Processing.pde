@@ -9,7 +9,6 @@ class EEG_Processing_User {
   private float fs_Hz;  //sample rate
   private int nchan;
 
-  //add your own variables here
   boolean isTriggered = false;  //boolean to keep track of when the trigger condition is met
   float upperThreshold = 25;  //default uV upper threshold value ... this will automatically change over time
   float lowerThreshold = 0;  //default uV lower threshold value ... this will automatically change over time
@@ -24,7 +23,6 @@ class EEG_Processing_User {
   int ourChan = 2 - 1;  //channel being monitored ... "3 - 1" means channel 3 (with a 0 index)
   float myAverage = 0.0;   //this will change over time ... used for calculations below
   float channel1Average = 0.0;   //this will change over time ... used for calculations below
-
 
   float lastAve = 0.0; // store the last average value
 
@@ -43,21 +41,18 @@ class EEG_Processing_User {
     fs_Hz = sample_rate_Hz;
   }
 
-  //add some functions here...if you'd like
+  /**
+   * The processing routine called by the OpenBCI main program...update this with whatever you'd like to do
+   * @param dataNewest   holds raw EEG data that is new since the last call
+   * @param dataLong     holds a longer piece of buffered EEG data, of same length as will be plotted on the screen
+   * @param dataFiltered this data has been filtered and is ready for plotting on the screen
+   * @param fftData      holds the FFT (frequency spectrum) of the latest data
+   */
+  public void process(float[][] dataNewest, float[][] dataLong, float[][] dataFiltered, FFT[] fftData) {
 
-  //here is the processing routine called by the OpenBCI main program...update this with whatever you'd like to do
-  public void process(float[][] data_newest_uV, //holds raw EEG data that is new since the last call
-        float[][] data_long_uV, //holds a longer piece of buffered EEG data, of same length as will be plotted on the screen
-        float[][] data_forDisplay_uV, //this data has been filtered and is ready for plotting on the screen
-        FFT[] fftData) {              //holds the FFT (frequency spectrum) of the latest data
-
-    //for example, you could loop over each EEG channel to do some sort of time-domain processing
-    //using the sample values that have already been filtered, as will be plotted on the display
-    float EEG_value_uV;
-
-    for (int i = data_forDisplay_uV[ourChan].length - averagePeriod; i < data_forDisplay_uV[ourChan].length; i++) {
-       if (data_forDisplay_uV[ourChan][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
-         myAverage += abs(data_forDisplay_uV[ourChan][i]);  //add value to average ... we will soon divide by # of packets
+    for (int i = dataFiltered[ourChan].length - averagePeriod; i < dataFiltered[ourChan].length; i++) {
+       if (dataFiltered[ourChan][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
+         myAverage += abs(dataFiltered[ourChan][i]);  //add value to average ... we will soon divide by # of packets
        }
     }
 
@@ -116,9 +111,9 @@ class EEG_Processing_User {
     output_normalized = map(myAverage, lowerThreshold, upperThreshold, 0, 1);
 
 
-    for (int i = data_forDisplay_uV[channel1].length - averagePeriod; i < data_forDisplay_uV[channel1].length; i++) {
-       if (data_forDisplay_uV[channel1][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
-         channel1Average += abs(data_forDisplay_uV[channel1][i]);  //add value to average ... we will soon divide by # of packets
+    for (int i = dataFiltered[channel1].length - averagePeriod; i < dataFiltered[channel1].length; i++) {
+       if (dataFiltered[channel1][i] <= acceptableLimitUV) { //prevent BIG spikes from effecting the average
+         channel1Average += abs(dataFiltered[channel1][i]);  //add value to average ... we will soon divide by # of packets
        }
     }
 
@@ -380,17 +375,20 @@ class EEG_Processing {
     if (currentNotch_ind >= N_NOTCH_CONFIGS) currentNotch_ind = 0;
   }
 
-  public void process(float[][] data_newest_uV, //holds raw EEG data that is new since the last call
-        float[][] data_long_uV, //holds a longer piece of buffered EEG data, of same length as will be plotted on the screen
-        float[][] data_forDisplay_uV, //put data here that should be plotted on the screen
-        FFT[] fftData) {              //holds the FFT (frequency spectrum) of the latest data
+  /**
+   * @param dataNewest   holds raw EEG data that is new since the last call
+   * @param dataLong     holds a longer piece of buffered EEG data, of same length as will be plotted on the screen
+   * @param dataFiltered put data here that should be plotted on the screen
+   * @param fftData      holds the FFT (frequency spectrum) of the latest data 
+   */
+  public void process(float[][] dataNewest, float[][] dataLong, float[][] dataFiltered, FFT[] fftData) {
 
     //loop over each EEG channel
     for (int Ichan=0;Ichan < nchan; Ichan++) {
 
       //filter the data in the time domain
-      filterIIR(filtCoeff_notch[currentNotch_ind].b, filtCoeff_notch[currentNotch_ind].a, data_forDisplay_uV[Ichan]); //notch
-      filterIIR(filtCoeff_bp[currentFilt_ind].b, filtCoeff_bp[currentFilt_ind].a, data_forDisplay_uV[Ichan]); //bandpass
+      filterIIR(filtCoeff_notch[currentNotch_ind].b, filtCoeff_notch[currentNotch_ind].a, dataFiltered[Ichan]); //notch
+      filterIIR(filtCoeff_bp[currentFilt_ind].b, filtCoeff_bp[currentFilt_ind].a, dataFiltered[Ichan]); //bandpass
 
       //compute the standard deviation of the filtered signal...this is for the head plot
       float[] fooData_filt = dataBuffY_filtY_uV[Ichan];  //use the filtered data
