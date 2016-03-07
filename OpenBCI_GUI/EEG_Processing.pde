@@ -81,7 +81,7 @@ class EEG_Processing_User {
 
       if (outputsNormalized[ichan] >= tripUpperThresholds[ichan] && !isTriggered[ichan]) {
         println("channel " + ichan + " triggered");
-        audioSamples[ichan].trigger();
+        if (audioSamples[ichan] != null) audioSamples[ichan].trigger();
         isTriggered[ichan] = true;
       }
 

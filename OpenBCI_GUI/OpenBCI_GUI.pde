@@ -280,8 +280,8 @@ void initSystem(){
 
   //prepare the source of the input data
   switch (eegDataSource) {
-    case DATASOURCE_NORMAL: case DATASOURCE_NORMAL_W_AUX:
-
+    case DATASOURCE_NORMAL:
+    case DATASOURCE_NORMAL_W_AUX:
       // int nDataValuesPerPacket = OpenBCI_Nchannels;
       int nEEDataValuesPerPacket = nchan;
       boolean useAux = false;
@@ -497,7 +497,7 @@ void systemUpdate(){ // for updating data values and variables
   controlPanel.update();
 }
 
-void systemDraw(){ //for drawing to the screen
+void systemDraw() { //for drawing to the screen
 
   //redraw the screen...not every time, get paced by when data is being plotted
   background(bgColor);  //clear the screen
@@ -535,7 +535,7 @@ void systemDraw(){ //for drawing to the screen
         popStyle();
         gui.draw(); //draw the GUI
         // playground.draw();
-      } catch (Exception e){
+      } catch (Exception e) {
         println(e.getMessage());
         reinitializeGUIdelay = reinitializeGUIdelay * 2;
         println("OpenBCI_GUI: systemDraw: New GUI reinitialize delay = " + reinitializeGUIdelay);
@@ -546,10 +546,9 @@ void systemDraw(){ //for drawing to the screen
     }
 
     playground.draw();
-    if(drawUser){
+    if (drawUser) {
       eegProcessing_user.draw();
     }
-
   }
 
   //control panel
@@ -826,7 +825,7 @@ void mousePressed() {
     if (controlPanel.isOpen == false) { //Should limit interactivity of main GUI if control panel is open
       //was the stopButton pressed?
       gui.mousePressed(); // trigger mousePressed function in GUI
-      //most of the logic below should be migrated into the Gui_manager specific function above
+      //TODO: most of the logic below should be migrated into the Gui_manager specific function above
 
       if (gui.stopButton.isMouseHere()) {
         gui.stopButton.setIsActive(true);

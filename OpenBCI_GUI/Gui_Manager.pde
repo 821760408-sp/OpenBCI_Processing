@@ -23,6 +23,8 @@ import org.gwoptics.graphics.graph2D.backgrounds.*;
 import ddf.minim.analysis.*; //for FFT
 import java.util.*; //for Array.copyOfRange()
 
+MenuList sampleList;
+
 class Gui_Manager {
 
   ScatterTrace montageTrace;
@@ -48,14 +50,13 @@ class Gui_Manager {
   Button showPolarityButton;
   Button sampleButton; // toggles a menu for assigning audio samples to channels
   SampleSourceBox sampleBox;
-  // boolean drawSampleBlock = false;
 
   //these two buttons toggle between EEG graph state (they are mutually exclusive states)
   Button showMontageButton; // to show uV time graph as opposed to channel controller
   Button showChannelControllerButton; //to drawChannelController on top of gMontage
   // boolean isChannelControllerVisible;
 
-  TextBox titleMontage, titleFFT,titleSpectrogram;
+  TextBox titleMontage, titleFFT, titleSpectrogram;
   TextBox[] chanValuesMontage;
   TextBox[] impValuesMontage;
   boolean showMontageValues;
@@ -290,18 +291,16 @@ class Gui_Manager {
     filtNotchButton = new Button(x,y,w,h,"Notch\n" + eegProcessing.getShortNotchDescription(),fontInfo.buttonLabel_size);
 
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset,gutter_between_buttons);
-    println("filt button x: " + x);
     filtBPButton = new Button(x,y,w,h,"BP Filt\n" + eegProcessing.getShortFilterDescription(),fontInfo.buttonLabel_size);
 
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset, gutter_between_buttons); //int win_x = 1024; window width
-    println("audio sample button x: " + x);
     sampleButton = new Button(x, y, w, h, "Audio\nSamples", fontInfo.buttonLabel_size);
     sampleButton.setIsActive(false);
     sampleButton.makeDropdownButton(true);
     
     int boxX = x;
     int boxY = 2 + sampleButton.but_dy;
-    int boxW = sampleButton.but_dx * 4 - 10;
+    int boxW = sampleButton.but_dx * 5;
     int boxH = 235;
     int padding = 10;
     sampleBox = new SampleSourceBox(boxX, boxY, boxW, boxH, padding);
@@ -310,7 +309,6 @@ class Gui_Manager {
 
     //setup start/stop button
     x = calcButtonXLocation(Ibut++, win_x, w, xoffset,gutter_between_buttons);
-    println("x: " + x);
     int w_wide = 120;    //button width, wider
     x = x + w - w_wide - (int)(gutter_between_buttons*win_x);  //adjust the x position for the wider button, plus double the gutter
     stopButton = new Button(x, y, w_wide, h, stopButton_pressToStart_txt, fontInfo.buttonLabel_size);
@@ -879,7 +877,7 @@ class Gui_Manager {
       sampleBox.draw();
       cp5.get(MenuList.class, "sampleList").setVisible(true);
     } else {
-      cp5.get(MenuList.class, "sampleList").setVisible(false);
+      cp5.get(MenuList.class, "sampleList").setVisible(false); //all clicking events defined in controlEvent() function in ControlPanel.pde
     }
   }
 
@@ -943,8 +941,8 @@ class SampleSourceBox {
     h = _h;
     padding = _padding;
 
-    sampleList = new MenuList(cp5, "sampleList", w - padding*2, 192, f2);
-    sampleList.setPosition(x + padding, y + padding*2 + 13);
+    sampleList = new MenuList(cp5, "sampleList", w - padding * 2, 192, f2);
+    sampleList.setPosition(x + padding, y + padding * 2 + 13);
     for (int i = 0; i < nchan; ++i) { //nchan is a global variable defined in OpenBCI_GUI.pde
       sampleList.addItem(makeItem("Channel " + (i + 1) + ": "));
     }
@@ -963,7 +961,7 @@ class SampleSourceBox {
       fill(bgColor);
       textFont(f1);
       textAlign(LEFT, TOP);
-      text("ADD SAMPLE TO", x + padding, y + padding);
+      text("ADD AUDIO SAMPLE TO:", x + padding, y + padding);
     popStyle();
   }
 };

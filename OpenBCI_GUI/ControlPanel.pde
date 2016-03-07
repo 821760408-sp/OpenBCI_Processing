@@ -28,8 +28,6 @@ CallbackListener cb = new CallbackListener() { //used by ControlP5 to clear text
 
 MenuList sourceList;
 
-MenuList sampleList;
-
 //Global buttons and elements for the control panel (changed within the classes below)
 MenuList serialList;
 String[] serialPorts = new String[Serial.list().length];
@@ -403,10 +401,12 @@ class ControlPanel {
   }
 };
 
+Map bob;
+
 public void controlEvent(ControlEvent theEvent) {
 
   if (theEvent.isFrom("sourceList")) {
-    Map bob = ((MenuList)theEvent.getController()).getItem(int(theEvent.getValue()));
+    bob = ((MenuList)theEvent.getController()).getItem(int(theEvent.getValue()));
     output("Data Source = " + (String)bob.get("headline"));
     int newDataSource = int(theEvent.getValue());
     eegDataSource = newDataSource; // reset global eegDataSource to the selected value from the list
@@ -414,13 +414,13 @@ public void controlEvent(ControlEvent theEvent) {
   }
 
   if (theEvent.isFrom("serialList")) {
-    Map bob = ((MenuList)theEvent.getController()).getItem(int(theEvent.getValue()));
+    bob = ((MenuList)theEvent.getController()).getItem(int(theEvent.getValue()));
     openBCI_portName = (String)bob.get("headline");
     output("OpenBCI Port Name = " + openBCI_portName);
   }
 
   if (theEvent.isFrom("sdTimes")) {
-    Map bob = ((MenuList)theEvent.getController()).getItem(int(theEvent.getValue()));
+    bob = ((MenuList)theEvent.getController()).getItem(int(theEvent.getValue()));
     sdSettingString = (String)bob.get("headline");
     sdSetting = int(theEvent.getValue());
     if (sdSetting != 0) {
@@ -429,6 +429,13 @@ public void controlEvent(ControlEvent theEvent) {
       output("OpenBCI microSD Setting = " + sdSettingString);
     }
     verbosePrint("SD setting = " + sdSetting);
+  }
+
+  if (theEvent.isFrom("sampleList")) {
+    selectedChannel = int(theEvent.getValue()); //This is such a bad way to update index...
+    bob = ((MenuList)theEvent.getController()).getItem(selectedChannel);
+    // print((String)bob.get("headline"));
+    selectInput("Select a soundfile for this channel:", "sampleSelected");
   }
 }
 
@@ -794,6 +801,27 @@ void playbackSelected(File selection) {
   }
 }
 
+String sampleFilename = "N/A";
+int selectedChannel = -1;
 
+void sampleSelected (File selection) {
+  if (selection == null) {
+    println("ControlPanel: playbackSelected: Window was closed or the user hit cancel.");
+  } else {
+    sampleFilename = selection.getAbsolutePath();
+    println("ControlPanel: playbackSelected: User selected " + sampleFilename);
+  }
+  if (selectedChannel != -1) {
+    println("Channel selected: " + (selectedChannel + 1));
+    try {
+      audioSamples[selectedChannel] = minim.loadSample(sampleFilename);
+      println("Sample file successfully loaded.");
+      String label = bob.get("headline").toString() + selection.getName();
+      bob.put("headline", label);
+    } catch (Exception e) {
+      println("Could not open file for playback: " + sampleFilename);
+    }
+  }
+}
 
 

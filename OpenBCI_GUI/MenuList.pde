@@ -21,7 +21,7 @@ public class MenuList extends Controller {
   int itemHeight = 24;
   int scrollerLength = 40;
   int scrollerWidth = 15;
-  List< Map<String, Object>> items = new ArrayList< Map<String, Object>>();
+  List<Map<String, Object>> items = new ArrayList<Map<String, Object>>();
   PGraphics menu;
   boolean updateMenu;
   int hoverItem = -1;
@@ -32,14 +32,13 @@ public class MenuList extends Controller {
 
   MenuList(ControlP5 c, String theName, int theWidth, int theHeight, PFont theFont) {
 
-    super( c, theName, 0, 0, theWidth, theHeight );
-    c.register( this );
+    super(c, theName, 0, 0, theWidth, theHeight);
+    c.register(this);
     menu = createGraphics(getWidth(),getHeight());
 
     menuFont = theFont;
 
     setView(new ControllerView<MenuList>() {
-
       public void display(PGraphics pg, MenuList t) {
         if (updateMenu) {
           updateMenu();
@@ -49,20 +48,19 @@ public class MenuList extends Controller {
           int len = -(itemHeight * items.size()) + getHeight();
           int ty;
           if(len != 0){
-            ty = int(map(pos, len, 0, getHeight() - scrollerLength - 2, 2 ) );
+            ty = int(map(pos, len, 0, getHeight() - scrollerLength - 2, 2));
           } else {
             ty = 0;
           }
           menu.fill(bgColor, 100);
-          if(ty > 0){
-            menu.rect(getWidth()-scrollerWidth-2, ty, scrollerWidth, scrollerLength );
+          if (ty > 0) {
+            menu.rect(getWidth() - scrollerWidth - 2, ty, scrollerWidth, scrollerLength);
           }
           menu.endDraw();
         }
         pg.image(menu, 0, 0);
       }
-    }
-    );
+    });
     updateMenu();
   }
 
@@ -71,27 +69,27 @@ public class MenuList extends Controller {
     int len = -(itemHeight * items.size()) + getHeight();
     npos = constrain(npos, len, 0);
     pos += (npos - pos) * 0.1;
-    //    pos += (npos - pos) * 0.1;
+    // pos += (npos - pos) * 0.1;
     menu.beginDraw();
     menu.noStroke();
     menu.background(255, 64);
     menu.textFont(cp5.getFont().getFont());
     menu.pushMatrix();
-    menu.translate( 0, pos );
+    menu.translate(0, pos);
     menu.pushMatrix();
     
     int i0;
-    if((itemHeight * items.size()) != 0){
-      i0 = PApplet.max( 0, int(map(-pos, 0, itemHeight * items.size(), 0, items.size())));
-    } else{
-      i0 = 0; 
+    if ((itemHeight * items.size()) != 0) {
+      i0 = PApplet.max(0, int(map(-pos, 0, itemHeight * items.size(), 0, items.size())));
+    } else {
+      i0 = 0;
     }
-    int range = ceil((float(getHeight())/float(itemHeight))+1);
-    int i1 = PApplet.min( items.size(), i0 + range );
+    int range = ceil((float(getHeight()) / float(itemHeight)) + 1);
+    int i1 = PApplet.min(items.size(), i0 + range);
 
-    menu.translate(0, i0*itemHeight);
+    menu.translate(0, i0 * itemHeight);
 
-    for (int i=i0; i<i1; i++) {
+    for (int i = i0; i < i1; i++) {
       Map m = items.get(i);
       menu.fill(255, 100);
       if (i == hoverItem) {
@@ -101,10 +99,10 @@ public class MenuList extends Controller {
         menu.stroke(184, 220, 105, 255);
         menu.strokeWeight(1);
         menu.fill(184, 220, 105, 255);
-        menu.rect(0, 0, getWidth()-1, itemHeight-1 );
+        menu.rect(0, 0, getWidth() - 1, itemHeight - 1);
         menu.noStroke();
       } else {
-        menu.rect(0, 0, getWidth(), itemHeight-1 );
+        menu.rect(0, 0, getWidth(), itemHeight - 1);
       }
       menu.fill(bgColor);
       menu.textFont(menuFont);
