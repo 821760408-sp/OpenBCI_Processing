@@ -65,12 +65,12 @@ class EEG_Processing_User {
     for (int ichan = 0; ichan < nchan; ++ichan) {
       for (int i = dataFiltered[ichan].length - averagePeriod; i < dataFiltered[ichan].length; ++i) {
         if (dataFiltered[ichan][i] <= acceptableLimits[ichan]) { //prevent BIG spikes from effecting the average
-          averages[ichan] += abs(dataFiltered[ichan][i]);         //add value to average ... we will soon divide by # of packets
+          averages[ichan] += abs(dataFiltered[ichan][i]);        //rectification
         } else {
           averages[ichan] += acceptableLimits[ichan];
         }
       }
-      averages[ichan] /= float(averagePeriod);
+      averages[ichan] /= float(averagePeriod);                   //running mean
 
       //single threshold method
       if (averages[ichan] >= upperThresholds[ichan]) upperThresholds[ichan] = averages[ichan];
