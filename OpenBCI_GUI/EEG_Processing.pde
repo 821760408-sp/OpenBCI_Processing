@@ -77,7 +77,7 @@ class EEG_Processing_User {
       if (averages[ichan] <= lowerThresholds[ichan]) lowerThresholds[ichan] = averages[ichan];
       outputsNormalized[ichan] = map(averages[ichan], lowerThresholds[ichan], upperThresholds[ichan], 0, 1);  
 
-      println("normalized output (channel " + ichan + "): " + outputsNormalized[ichan]);
+      if (ichan == 0 || ichan == 1) println("normalized output (channel " + ichan + "): " + outputsNormalized[ichan]);
 
       if (outputsNormalized[ichan] >= tripUpperThresholds[ichan] && !isTriggered[ichan]) {
         println("channel " + ichan + " triggered");
