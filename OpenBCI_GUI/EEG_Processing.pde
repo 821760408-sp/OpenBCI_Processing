@@ -43,8 +43,8 @@ class EEG_Processing_User {
     for (int i = 0; i < isTriggered.length; ++i) isTriggered[i] = false;
     for (int i = 0; i < upperThresholds.length; ++i) upperThresholds[i] = 25.0;
     for (int i = 0; i < lowerThresholds.length; ++i) lowerThresholds[i] = 0.0;
-    for (int i = 0; i < tripUpperThresholds.length; ++i) tripUpperThresholds[i] = 0.5;
-    for (int i = 0; i < tripUpperThresholds.length; ++i) tripLowerThresholds[i] = 0.15;
+    for (int i = 0; i < tripUpperThresholds.length; ++i) tripUpperThresholds[i] = 0.75;
+    for (int i = 0; i < tripUpperThresholds.length; ++i) tripLowerThresholds[i] = 0.1;
     for (int i = 0; i < averages.length; ++i) averages[i] = 0.0;
     for (int i = 0; i < acceptableLimits.length; ++i) acceptableLimits[i] = 0.0;
     for (int i = 0; i < outputs.length; ++i) outputs[i] = 0.0;

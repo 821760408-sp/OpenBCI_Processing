@@ -816,8 +816,8 @@ void sampleSelected (File selection) {
     try {
       audioSamples[selectedChannel] = minim.loadSample(sampleFilename);
       println("Sample file successfully loaded.");
-      String label = bob.get("headline").toString() + selection.getName();
-      bob.put("headline", label);
+      // String label = bob.get("headline").toString() + selection.getName();
+      bob.put("headline", "Channel " + selectedChannel + ": " + selection.getName());
     } catch (Exception e) {
       println("Could not open file for playback: " + sampleFilename);
     }
