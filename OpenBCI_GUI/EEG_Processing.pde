@@ -99,6 +99,8 @@ class EEG_Processing_User {
       }
     }
 
+    // TODO: highlight triggered section in the uV graph
+
     /* FREQUENCY DOMAIN PROCESSING */
 
     // float FFT_freq_Hz, FFT_value_uV;
